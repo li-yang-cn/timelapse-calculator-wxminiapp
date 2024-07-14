@@ -1,0 +1,15 @@
+<view class="container">
+    <view class="header">
+        <view class="title">关于作者</view>
+        <view class="body">
+            <text>Geek_Li\n</text>
+            <text>互联网从业者\n</text>
+            <text>兼职摄影师\n</text>
+            <text>喜欢探索世界\n</text>
+            <text>热爱通过影像记录生活\n</text>
+            <text>从不错过有趣的技术问题\n</text>
+            <text>能用程序解决的问题绝不手动操作\n</text>
+            <text>在各平台搜索“Geek_Lii”关注我\n</text>
+        </view>
+    </view>
+</view>

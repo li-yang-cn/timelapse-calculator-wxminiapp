@@ -1,0 +1,74 @@
+.functions{
+    margin: 10%;
+}
+section {
+    margin-bottom: 20px;
+  }
+  label {
+    display: block;
+    margin-bottom: 5px;
+  }
+  input {
+    width: 100%;
+    padding: 10px;
+    border-radius: 5px;
+  }
+  .result {
+    margin-top: 20px;
+  }
+  button {
+    width: 100%;
+    background-color:#444444;
+    color: #dddddd;
+    border: none;
+    border-radius: 5px;
+    font-size: 16px;
+    margin: 20px;
+  }
+  .emoji {
+    margin-top: 30px;
+    width: 100px;
+    height: 100px;
+  }
+  .title{
+    font-size: 28px;
+  }
+  .reset {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+/* index.wxss */
+.container {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+  }
+  
+  .row {
+    display: flex;
+    align-items: center;
+    margin: 15px;
+  }
+  .buttons{
+      display: flex;
+  }
+  .icon {
+    flex: 1;
+    text-align: left; /* 确保图标左对齐 */
+  }
+  
+  .label {
+    flex: 10 2 10%;
+    text-align: left; /* 确保标签左对齐 */
+  }
+  
+  .input, .picker {
+    flex: 8 5 20%;
+    text-align: right; /* 输入框和选择器内容左对齐 */
+  }
+  
+  .unit {
+    flex: 1;
+    text-align: left; /* 单位左对齐 */
+  }

@@ -1,0 +1,37 @@
+{
+    "pages": [
+      "pages/index/index",
+      "pages/instructions/instructions",
+      "pages/about/about"
+    ],
+    "window": {
+        "navigationBarTextStyle": "white",
+        "navigationStyle": "custom"
+    },
+    "tabBar": {
+      "list": [
+        {
+          "pagePath": "pages/index/index",
+          "text": "工具",
+          "iconPath": "images/tool.png",
+          "selectedIconPath": "images/tool_selected.png"
+        },
+        {
+          "pagePath": "pages/instructions/instructions",
+          "text": "使用说明",
+          "iconPath": "images/instructions.png",
+          "selectedIconPath": "images/instructions_selected.png"
+        },
+        {
+          "pagePath": "pages/about/about",
+          "text": "关于",
+          "iconPath": "images/about.png",
+          "selectedIconPath": "images/about_selected.png"
+        }
+      ],
+      "color": "#AAAAAA",
+      "selectedColor": "#FFFFFF",
+      "backgroundColor": "#333333",
+      "borderStyle": "black"
+    }
+  }
