@@ -1,44 +1,44 @@
 <view class="container">
-  <view class="title">延时摄影计算器</view>
-  <view class="logo">
-    <image class="emoji" src="/images/logo.png"></image>
-  </view>
-  <view class="functions">
-    <view class="row">
-      <view class="icon">⏰</view>
-      <view class="label">拍摄时长</view>
-      <input class="input" id="duration" type="number" placeholder="输入分钟数" value="{{duration}}" bindinput="inputChange"/>
-      <view class="unit">分</view>
+    <view class="title">延时摄影计算器</view>
+    <view class="logo">
+        <image class="emoji" src="/images/logo.png"></image>
     </view>
-    <view class="row">
-      <view class="icon">🎬</view>
-      <view class="label">成片时长</view>
-      <input class="input" id="finalDuration" type="number" placeholder="输入秒数" value="{{finalDuration}}" bindinput="inputChange"/>
-      <view class="unit">秒</view>
+    <view class="functions">
+        <view class="row">
+            <view class="icon">⏰</view>
+            <view class="label">拍摄时长</view>
+            <input class="input" id="duration" type="number" placeholder="输入分钟数" value="{{duration}}" bindinput="inputChange" />
+            <view class="unit">分</view>
+        </view>
+        <view class="row">
+            <view class="icon">🎬</view>
+            <view class="label">成片时长</view>
+            <input class="input" id="finalDuration" type="number" placeholder="输入秒数" value="{{finalDuration}}" bindinput="inputChange" />
+            <view class="unit">秒</view>
+        </view>
+        <view class="row">
+            <view class="icon">🎞️</view>
+            <view class="label">帧速率</view>
+            <picker mode="selector" id="frameRate" bindchange="pickerChange" value="1" range="{{frameRates}}">
+                <view class="picker">{{frameRate}}</view>
+            </picker>
+            <view class="unit">fps</view>
+        </view>
+        <view class="row">
+            <view class="icon">🕙</view>
+            <view class="label">拍摄间隔</view>
+            <input class="input" id="interval" type="number" placeholder="输入秒数" value="{{interval}}" bindinput="inputChange" />
+            <view class="unit">秒</view>
+        </view>
+        <view class="row">
+            <view class="icon">📃</view>
+            <view class="label">总张数</view>
+            <input class="input" id="totalFrames" type="number" placeholder="输入张数" value="{{totalFrames}}" bindinput="inputChange" />
+            <view class="unit">张</view>
+        </view>
     </view>
-    <view class="row">
-      <view class="icon">🎞️</view>
-      <view class="label">帧速率</view>
-      <picker mode="selector" id="frameRate" bindchange="pickerChange" value="1" range="{{frameRates}}">
-        <view class="picker">{{frameRate}}</view>
-      </picker>
-      <view class="unit">fps</view>
+    <view class="buttons">
+        <button class="calc-button" bindtap="calculate" wx:if="{{!showResetButton}}">计算</button>
+        <button class="reset-button" bindtap="reset" wx:if="{{showResetButton}}">重置</button>
     </view>
-    <view class="row">
-      <view class="icon">🕙</view>
-      <view class="label">拍摄间隔</view>
-      <input class="input" id="interval" type="number" placeholder="输入秒数" value="{{interval}}" bindinput="inputChange"/>
-      <view class="unit">秒</view>
-    </view>
-    <view class="row">
-      <view class="icon">📃</view>
-      <view class="label">总张数</view>
-      <input class="input" id="totalFrames" type="number" placeholder="输入张数" value="{{totalFrames}}" bindinput="inputChange"/>
-      <view class="unit">张</view>
-    </view>
-  </view>
-  <view class="buttons">
-    <button class="calc-button" bindtap="calculate" wx:if="{{!showResetButton}}">计算</button>
-    <button class="reset-button" bindtap="reset" wx:if="{{showResetButton}}">重置</button>
-  </view>
 </view>
