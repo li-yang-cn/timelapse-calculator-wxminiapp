@@ -1,3 +1,8 @@
+<div align="center">
+  <img src="./images/qr_code.jpg" alt="Example Image" width="50%">
+  <p><em>Please scan the Mini Program code using WeChat.</em></p>
+</div>
+
 # Timelapse Calculator for WeChat Mini Program
 
 This WeChat Mini Program is a Timelapse Calculator that helps users determine the necessary parameters for creating a timelapse video. By inputting two or three parameters such as shooting duration, final video length, frame rate, shooting interval, and total number of shots, the app automatically calculates the remaining values. This tool simplifies the planning process for timelapse photography enthusiasts and ensures accurate and efficient shooting sessions.
