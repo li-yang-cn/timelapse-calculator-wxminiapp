@@ -19,15 +19,8 @@ Page({
         isCalculated: false, // 是否已经计算
         showResetButton: false // 是否显示重置按钮
     },
-    onLoad() {
-        this.setData({
-            startTime: Date.now()
-        })
-    },
-    onShow() {
-        const endTime = Date.now();
-        const loadTime = endTime - this.data.startTime;
-        log.info(`[TIME]Index page loaded in ${loadTime} ms`);
+    onReady() {
+        log.info(`[TIME]Index page is Ready`);
     },
     inputChange(e) {
         if (this.data.isCalculated) {
