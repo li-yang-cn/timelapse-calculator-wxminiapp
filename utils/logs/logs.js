@@ -10,6 +10,7 @@ module.exports = {
   info() {
     if (!log) return
     log.info.apply(log, arguments)
+    console.log(arguments)
   },
   warn() {
     if (!log) return
