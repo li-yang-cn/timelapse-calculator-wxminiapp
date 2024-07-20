@@ -125,7 +125,25 @@ Page({
             TotalFrames: ${totalFrames}, 
             FrameRate: ${frameRate},
             Result-FinalDuration: ${finalDuration}, 
-            Result-Duration: ${duration},`
+            Result-Duration: ${duration}`
+            )
+        } else {
+            wx.showToast({
+                title: '输入必要的参数进行计算',
+                icon: 'none'
+            });
+            console.log(`[ERROR] User input:
+            Interval: ${interval},
+            TotalFrames: ${totalFrames}, 
+            FrameRate: ${frameRate},
+            FinalDuration: ${finalDuration}, 
+            Duration: ${duration}`);
+            log.error(`[ERROR] User input:
+            Interval: ${interval},
+            TotalFrames: ${totalFrames}, 
+            FrameRate: ${frameRate},
+            FinalDuration: ${finalDuration}, 
+            Duration: ${duration}`
             )
         }
 
@@ -153,10 +171,10 @@ Page({
                 frameRate: false,
             }
         });
-        console.log("[REST]")
     },
 
     reset() {
+        log.info("[REST]");
         this.setData({
             duration: '',
             finalDuration: '',
