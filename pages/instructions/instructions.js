@@ -1,57 +1,13 @@
-// pages/instructions/instructions.js
+var log = require('../../utils/logs/logs')
 Page({
-
-    /**
-     * Page initial data
-     */
-    data: {
-
+    onLoad() {
+        this.setData({
+            startTime: Date.now()
+        })
     },
-
-    /**
-     * Lifecycle function--Called when page load
-     */
-    onLoad() {},
-
-    onReady() {},
-
-
     onShow() {
-
+        const endTime = Date.now();
+        const loadTime = endTime - this.data.startTime;
+        log.info(`[TIME]Instruction page loaded in ${loadTime} ms`);
     },
-
-    /**
-     * Lifecycle function--Called when page hide
-     */
-    onHide() {
-
-    },
-
-    /**
-     * Lifecycle function--Called when page unload
-     */
-    onUnload() {
-
-    },
-
-    /**
-     * Page event handler function--Called when user drop down
-     */
-    onPullDownRefresh() {
-
-    },
-
-    /**
-     * Called when page reach bottom
-     */
-    onReachBottom() {
-
-    },
-
-    /**
-     * Called when user click on the top right corner to share
-     */
-    onShareAppMessage() {
-
-    }
 })

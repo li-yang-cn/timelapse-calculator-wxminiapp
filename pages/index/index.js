@@ -1,3 +1,5 @@
+var log = require('../../utils/logs/logs')
+
 Page({
     data: {
         duration: '', // 拍摄时长（分钟）
@@ -17,7 +19,16 @@ Page({
         isCalculated: false, // 是否已经计算
         showResetButton: false // 是否显示重置按钮
     },
-
+    onLoad() {
+        this.setData({
+            startTime: Date.now()
+        })
+    },
+    onShow() {
+        const endTime = Date.now();
+        const loadTime = endTime - this.data.startTime;
+        log.info(`[TIME]Index page loaded in ${loadTime} ms`);
+    },
     inputChange(e) {
         if (this.data.isCalculated) {
             wx.showToast({
@@ -66,21 +77,63 @@ Page({
         if (!isNaN(duration) && !isNaN(finalDuration) && !isNaN(frameRate) && !userInputs.totalFrames && !userInputs.interval) {
             totalFrames = Math.round(finalDuration * frameRate);
             interval = parseFloat(((duration * 60) / totalFrames).toFixed(2));
+            log.info(`[CALC] FLOW-1 
+                Duration: ${duration}, 
+                FinalDuration: ${finalDuration}, 
+                FrameRate: ${frameRate}, 
+                Result-TotalFrames: ${totalFrames}, 
+                Result-Interval: ${interval}`
+                )
         } else if (!isNaN(duration) && !isNaN(frameRate) && !isNaN(interval) && !userInputs.totalFrames && !userInputs.finalDuration) {
             totalFrames = Math.round((duration * 60) / interval);
             finalDuration = parseFloat((totalFrames / frameRate).toFixed(2));
+            log.info(`[CALC] FLOW-2
+                Interval: ${interval},
+                Duration: ${duration},
+                FrameRate: ${frameRate}, 
+                Result-TotalFrames: ${totalFrames}, 
+                Result-FinalDuration: ${finalDuration},`
+                )
         } else if (!isNaN(finalDuration) && !isNaN(frameRate) && !isNaN(interval) && !userInputs.totalFrames && !userInputs.duration) {
             totalFrames = Math.round(finalDuration * frameRate);
             duration = parseFloat(((totalFrames * interval) / 60).toFixed(2));
+            log.info(`[CALC] FLOW-3
+                Interval: ${interval},
+                FinalDuration: ${finalDuration}, 
+                FrameRate: ${frameRate}, 
+                Result-TotalFrames: ${totalFrames}, 
+                Result-Duration: ${duration}`
+                )
         } else if (!isNaN(duration) && !isNaN(interval) && !isNaN(totalFrames) && !userInputs.finalDuration && !userInputs.frameRate) {
             finalDuration = parseFloat((totalFrames / frameRate).toFixed(2));
             frameRate = Math.round(totalFrames / finalDuration);
+            log.info(`[CALC] FLOW-4
+                Interval: ${interval},
+                TotalFrames: ${totalFrames}, 
+                Duration: ${duration},
+                Result-FinalDuration: ${finalDuration}, 
+                Result-FrameRate: ${frameRate} `
+                )
         } else if (!isNaN(finalDuration) && !isNaN(interval) && !isNaN(totalFrames) && !userInputs.duration && !userInputs.frameRate) {
             duration = parseFloat(((totalFrames * interval) / 60).toFixed(2));
             frameRate = Math.round(totalFrames / finalDuration);
+            log.info(`[CALC] FLOW-5
+                Interval: ${interval},
+                TotalFrames: ${totalFrames}, 
+                FinalDuration: ${finalDuration}, 
+                Result-Duration: ${duration},
+                Result-FrameRate: ${frameRate} `
+                )
         } else if (!isNaN(frameRate) && !isNaN(interval) && !isNaN(totalFrames) && !userInputs.duration && !userInputs.finalDuration) {
             duration = parseFloat(((totalFrames * interval) / 60).toFixed(2));
             finalDuration = parseFloat((totalFrames / frameRate).toFixed(2));
+            log.info(`[CALC] FLOW-5
+            Interval: ${interval},
+            TotalFrames: ${totalFrames}, 
+            FrameRate: ${frameRate},
+            Result-FinalDuration: ${finalDuration}, 
+            Result-Duration: ${duration},`
+            )
         }
 
         this.setData({
@@ -91,6 +144,7 @@ Page({
             totalFrames: userInputs.totalFrames ? totalFrames : (isNaN(totalFrames) ? '' : Math.round(totalFrames)),
             isCalculated: true, // 计算完成后锁定输入
             showResetButton: true // 显示重置按钮
+            
         });
 
         this.resetUserInputs();
@@ -106,6 +160,7 @@ Page({
                 frameRate: false,
             }
         });
+        console.log("[REST]")
     },
 
     reset() {
