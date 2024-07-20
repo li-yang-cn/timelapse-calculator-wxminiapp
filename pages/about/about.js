@@ -1,13 +1,6 @@
 var log = require('../../utils/logs/logs')
 Page({
-    onLoad() {
-        this.setData({
-            startTime: Date.now()
-        })
-    },
-    onShow() {
-        const endTime = Date.now();
-        const loadTime = endTime - this.data.startTime;
-        log.info(`[TIME]About page loaded in ${loadTime} ms`);
+    onReady() {
+        log.info(`[TIME]About page is Ready`);
     },
 })
