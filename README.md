@@ -13,9 +13,7 @@ This WeChat Mini Program is a Timelapse Calculator that helps users determine th
 - User-friendly interface
 
 
-## 中文描述
-
-微信小程序延时摄影计算器
+# 延时摄影计算器微信小程序
 
 这个微信小程序是一个延时摄影计算器，帮助用户确定制作延时视频所需的参数。通过输入拍摄时长、成片时长、帧速率、拍摄间隔和总张数中的两个或三个参数，应用程序会计算剩余的值。
 该工具简化了延时摄影爱好者的规划过程，确保拍摄的准确性和效率。
@@ -25,3 +23,8 @@ This WeChat Mini Program is a Timelapse Calculator that helps users determine th
 - 轻松确定帧速率和其他参数
 - 用户友好的界面
 
+
+# To-Do
+- [x] Add Logging for debug 2024/7/20
+- [ ] Add a local calculate history 
+- [ ] Add more functions for timelapse
