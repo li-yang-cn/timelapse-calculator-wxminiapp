@@ -130,12 +130,23 @@ Page({
             FrameRate: ${frameRate},
             Result-FinalDuration: ${finalDuration}, 
             Result-Duration: ${duration}`)
+        } else if ((!isNaN(totalFrames) && !isNaN(finalDuration)) && (totalFrames!=finalDuration*frameRate)) {
+            wx.showToast({
+                title: '总张数和成片时长冲突只输入其中一个即可',
+                icon: 'none'
+            });
+            log.info(`[ERROR1] Conflict:
+            Interval: ${interval},
+            TotalFrames: ${totalFrames}, 
+            FrameRate: ${frameRate},
+            Result-FinalDuration: ${finalDuration}, 
+            Result-Duration: ${duration}`)
         } else {
             wx.showToast({
                 title: '输入必要的参数进行计算',
                 icon: 'none'
             });
-            console.log(`[ERROR] User input:
+            console.log(`[ERROR2] User input:
             Interval: ${interval},
             TotalFrames: ${totalFrames}, 
             FrameRate: ${frameRate},
@@ -157,7 +168,6 @@ Page({
             totalFrames: userInputs.totalFrames ? totalFrames : (isNaN(totalFrames) ? '' : Math.round(totalFrames)),
             isCalculated: true, // 计算完成后锁定输入
             showResetButton: true // 显示重置按钮
-
         });
         this.resetUserInputs();
     },
