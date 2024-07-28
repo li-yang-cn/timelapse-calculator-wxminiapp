@@ -3,10 +3,13 @@
         <view class="title">使用说明</view>
         <view class="body">
             <text>👋 欢迎使用延时摄影计算器。\n</text>
-            <text>🕙 本程序帮您快速计算延时摄影的拍摄参数。\n</text>
-            <text>📱 输入拍摄时长、成片时长、帧率、拍摄间隔或总张数中的任意几个优先选择的参数，点击“计算”按钮完成计算。\n</text>
-            <text>🔘 需要重新输入参数时，点击“重置”按钮，清空所有输入框，重新输入参数。\n</text>
+            <text>📱 计算：输入任意两个参数，点击“计算”按钮完成计算。\n</text>
+            <text>🔘 重置：重新计算前，点击“重置”按钮即可。\n</text>
             <text>🙇 感谢使用，祝您拍摄愉快！\n</text>
         </view>
     </view>
+</view>
+
+<view class="footer">
+    <text class="version">v1.0.4</text>
 </view>

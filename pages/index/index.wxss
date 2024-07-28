@@ -1,5 +1,5 @@
 .functions {
-    margin: 10%;
+    margin: 30px;
 }
 
 section {
@@ -28,7 +28,7 @@ button {
     border: none;
     border-radius: 5px;
     font-size: 16px;
-    margin: 20px;
+
 }
 
 .emoji {
@@ -87,4 +87,10 @@ button {
     flex: 1;
     text-align: left;
     /* 单位左对齐 */
+}
+
+.tips {
+    margin-top: 20px;
+    text-align: center;
+    font-size: 12px;
 }

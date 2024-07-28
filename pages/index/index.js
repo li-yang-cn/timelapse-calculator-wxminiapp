@@ -75,8 +75,7 @@ Page({
                 FinalDuration: ${finalDuration}, 
                 FrameRate: ${frameRate}, 
                 Result-TotalFrames: ${totalFrames}, 
-                Result-Interval: ${interval}`
-                )
+                Result-Interval: ${interval}`)
         } else if (!isNaN(duration) && !isNaN(frameRate) && !isNaN(interval) && !userInputs.totalFrames && !userInputs.finalDuration) {
             totalFrames = Math.round((duration * 60) / interval);
             finalDuration = parseFloat((totalFrames / frameRate).toFixed(2));
@@ -85,8 +84,7 @@ Page({
                 Duration: ${duration},
                 FrameRate: ${frameRate}, 
                 Result-TotalFrames: ${totalFrames}, 
-                Result-FinalDuration: ${finalDuration},`
-                )
+                Result-FinalDuration: ${finalDuration},`)
         } else if (!isNaN(finalDuration) && !isNaN(frameRate) && !isNaN(interval) && !userInputs.totalFrames && !userInputs.duration) {
             totalFrames = Math.round(finalDuration * frameRate);
             duration = parseFloat(((totalFrames * interval) / 60).toFixed(2));
@@ -95,8 +93,7 @@ Page({
                 FinalDuration: ${finalDuration}, 
                 FrameRate: ${frameRate}, 
                 Result-TotalFrames: ${totalFrames}, 
-                Result-Duration: ${duration}`
-                )
+                Result-Duration: ${duration}`)
         } else if (!isNaN(duration) && !isNaN(interval) && !isNaN(totalFrames) && !userInputs.finalDuration && !userInputs.frameRate) {
             finalDuration = parseFloat((totalFrames / frameRate).toFixed(2));
             frameRate = Math.round(totalFrames / finalDuration);
@@ -105,8 +102,7 @@ Page({
                 TotalFrames: ${totalFrames}, 
                 Duration: ${duration},
                 Result-FinalDuration: ${finalDuration}, 
-                Result-FrameRate: ${frameRate} `
-                )
+                Result-FrameRate: ${frameRate} `)
         } else if (!isNaN(finalDuration) && !isNaN(interval) && !isNaN(totalFrames) && !userInputs.duration && !userInputs.frameRate) {
             duration = parseFloat(((totalFrames * interval) / 60).toFixed(2));
             frameRate = Math.round(totalFrames / finalDuration);
@@ -115,18 +111,53 @@ Page({
                 TotalFrames: ${totalFrames}, 
                 FinalDuration: ${finalDuration}, 
                 Result-Duration: ${duration},
-                Result-FrameRate: ${frameRate} `
-                )
+                Result-FrameRate: ${frameRate} `)
         } else if (!isNaN(frameRate) && !isNaN(interval) && !isNaN(totalFrames) && !userInputs.duration && !userInputs.finalDuration) {
             duration = parseFloat(((totalFrames * interval) / 60).toFixed(2));
             finalDuration = parseFloat((totalFrames / frameRate).toFixed(2));
-            log.info(`[CALC] FLOW-5
+            log.info(`[CALC] FLOW-6
             Interval: ${interval},
             TotalFrames: ${totalFrames}, 
             FrameRate: ${frameRate},
             Result-FinalDuration: ${finalDuration}, 
-            Result-Duration: ${duration},`
-            )
+            Result-Duration: ${duration}`)
+        } else if (!isNaN(duration) && !isNaN(frameRate) && !isNaN(totalFrames) && !userInputs.interval && !userInputs.finalDuration) {
+            finalDuration = parseFloat(totalFrames / frameRate);
+            interval = parseFloat(duration * 60 / 250);
+            log.info(`[CALC] FLOW-7
+            Interval: ${interval},
+            TotalFrames: ${totalFrames}, 
+            FrameRate: ${frameRate},
+            Result-FinalDuration: ${finalDuration}, 
+            Result-Duration: ${duration}`)
+        } else if ((!isNaN(totalFrames) && !isNaN(finalDuration)) && (totalFrames!=finalDuration*frameRate)) {
+            wx.showToast({
+                title: '总张数和成片时长冲突只输入其中一个即可',
+                icon: 'none'
+            });
+            log.info(`[ERROR1] Conflict:
+            Interval: ${interval},
+            TotalFrames: ${totalFrames}, 
+            FrameRate: ${frameRate},
+            Result-FinalDuration: ${finalDuration}, 
+            Result-Duration: ${duration}`)
+        } else {
+            wx.showToast({
+                title: '输入必要的参数进行计算',
+                icon: 'none'
+            });
+            console.log(`[ERROR2] User input:
+            Interval: ${interval},
+            TotalFrames: ${totalFrames}, 
+            FrameRate: ${frameRate},
+            FinalDuration: ${finalDuration}, 
+            Duration: ${duration}`);
+            log.error(`[ERROR] User input:
+            Interval: ${interval},
+            TotalFrames: ${totalFrames}, 
+            FrameRate: ${frameRate},
+            FinalDuration: ${finalDuration}, 
+            Duration: ${duration}`)
         }
 
         this.setData({
@@ -137,9 +168,7 @@ Page({
             totalFrames: userInputs.totalFrames ? totalFrames : (isNaN(totalFrames) ? '' : Math.round(totalFrames)),
             isCalculated: true, // 计算完成后锁定输入
             showResetButton: true // 显示重置按钮
-            
         });
-
         this.resetUserInputs();
     },
 
@@ -153,10 +182,10 @@ Page({
                 frameRate: false,
             }
         });
-        console.log("[REST]")
     },
 
     reset() {
+        log.info("[REST]");
         this.setData({
             duration: '',
             finalDuration: '',
