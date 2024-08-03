@@ -41,8 +41,9 @@
         <button class="calc-button" bindtap="calculate" wx:if="{{!showResetButton}}">计算</button>
         <button class="reset-button" bindtap="reset" wx:if="{{showResetButton}}">重置</button>
     </view>
-<view class = "tips">
-    <text class="tips">提示：输入任意两个参数即可计算，下滑可查看历史记录</text></view>
+    <view class="tips">
+        <text class="tips">提示：输入任意两个参数即可计算，下滑可查看历史记录</text>
+    </view>
 </view>
 <view class="history">
     <text class="history-title">历史记录（最近10条）</text>
@@ -67,5 +68,5 @@
 </view>
 
 <view class="buttons">
-        <button class="calc-button" bindtap="clearcache">清除</button>
+    <button class="calc-button" bindtap="clearcache">清除</button>
 </view>

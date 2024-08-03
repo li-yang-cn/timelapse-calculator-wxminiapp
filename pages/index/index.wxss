@@ -93,6 +93,7 @@ button {
     text-align: center;
     font-size: 12px;
 }
+
 .history {
     margin-top: 20px;
     padding: 10px;
@@ -104,7 +105,8 @@ button {
     margin-bottom: 10px;
 }
 
-.table-header, .table-row {
+.table-header,
+.table-row {
     display: flex;
     flex-direction: row;
     justify-content: space-between;
