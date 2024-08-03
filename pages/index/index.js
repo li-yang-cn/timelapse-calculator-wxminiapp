@@ -300,7 +300,8 @@ Page({
             })
         } catch (e) {
             log.error(e)
-        }
+        };
+        log.info("[ClearCache]")
     },
 
     onLoad() {
