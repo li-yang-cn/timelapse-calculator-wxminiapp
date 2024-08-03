@@ -70,6 +70,14 @@ Page({
         if (!isNaN(duration) && !isNaN(finalDuration) && !isNaN(frameRate) && !userInputs.totalFrames && !userInputs.interval) {
             totalFrames = Math.round(finalDuration * frameRate);
             interval = parseFloat(((duration * 60) / totalFrames).toFixed(2));
+            // 存储计算结果
+            this.storeCalculationResult({
+                duration,
+                finalDuration,
+                frameRate,
+                interval,
+                totalFrames
+            });
             log.info(`[CALC] FLOW-1 
                 Duration: ${duration}, 
                 FinalDuration: ${finalDuration}, 
@@ -79,6 +87,14 @@ Page({
         } else if (!isNaN(duration) && !isNaN(frameRate) && !isNaN(interval) && !userInputs.totalFrames && !userInputs.finalDuration) {
             totalFrames = Math.round((duration * 60) / interval);
             finalDuration = parseFloat((totalFrames / frameRate).toFixed(2));
+            // 存储计算结果
+            this.storeCalculationResult({
+                duration,
+                finalDuration,
+                frameRate,
+                interval,
+                totalFrames
+            });
             log.info(`[CALC] FLOW-2
                 Interval: ${interval},
                 Duration: ${duration},
@@ -88,6 +104,14 @@ Page({
         } else if (!isNaN(finalDuration) && !isNaN(frameRate) && !isNaN(interval) && !userInputs.totalFrames && !userInputs.duration) {
             totalFrames = Math.round(finalDuration * frameRate);
             duration = parseFloat(((totalFrames * interval) / 60).toFixed(2));
+            // 存储计算结果
+            this.storeCalculationResult({
+                duration,
+                finalDuration,
+                frameRate,
+                interval,
+                totalFrames
+            });
             log.info(`[CALC] FLOW-3
                 Interval: ${interval},
                 FinalDuration: ${finalDuration}, 
@@ -97,6 +121,14 @@ Page({
         } else if (!isNaN(duration) && !isNaN(interval) && !isNaN(totalFrames) && !userInputs.finalDuration && !userInputs.frameRate) {
             finalDuration = parseFloat((totalFrames / frameRate).toFixed(2));
             frameRate = Math.round(totalFrames / finalDuration);
+            // 存储计算结果
+            this.storeCalculationResult({
+                duration,
+                finalDuration,
+                frameRate,
+                interval,
+                totalFrames
+            });
             log.info(`[CALC] FLOW-4
                 Interval: ${interval},
                 TotalFrames: ${totalFrames}, 
@@ -106,6 +138,14 @@ Page({
         } else if (!isNaN(finalDuration) && !isNaN(interval) && !isNaN(totalFrames) && !userInputs.duration && !userInputs.frameRate) {
             duration = parseFloat(((totalFrames * interval) / 60).toFixed(2));
             frameRate = Math.round(totalFrames / finalDuration);
+            // 存储计算结果
+            this.storeCalculationResult({
+                duration,
+                finalDuration,
+                frameRate,
+                interval,
+                totalFrames
+            });
             log.info(`[CALC] FLOW-5
                 Interval: ${interval},
                 TotalFrames: ${totalFrames}, 
@@ -115,6 +155,14 @@ Page({
         } else if (!isNaN(frameRate) && !isNaN(interval) && !isNaN(totalFrames) && !userInputs.duration && !userInputs.finalDuration) {
             duration = parseFloat(((totalFrames * interval) / 60).toFixed(2));
             finalDuration = parseFloat((totalFrames / frameRate).toFixed(2));
+            // 存储计算结果
+            this.storeCalculationResult({
+                duration,
+                finalDuration,
+                frameRate,
+                interval,
+                totalFrames
+            });
             log.info(`[CALC] FLOW-6
             Interval: ${interval},
             TotalFrames: ${totalFrames}, 
@@ -124,13 +172,21 @@ Page({
         } else if (!isNaN(duration) && !isNaN(frameRate) && !isNaN(totalFrames) && !userInputs.interval && !userInputs.finalDuration) {
             finalDuration = parseFloat(totalFrames / frameRate);
             interval = parseFloat(duration * 60 / 250);
+            // 存储计算结果
+            this.storeCalculationResult({
+                duration,
+                finalDuration,
+                frameRate,
+                interval,
+                totalFrames
+            });
             log.info(`[CALC] FLOW-7
             Interval: ${interval},
             TotalFrames: ${totalFrames}, 
             FrameRate: ${frameRate},
             Result-FinalDuration: ${finalDuration}, 
             Result-Duration: ${duration}`)
-        } else if ((!isNaN(totalFrames) && !isNaN(finalDuration)) && (totalFrames!=finalDuration*frameRate)) {
+        } else if ((!isNaN(totalFrames) && !isNaN(finalDuration)) && (totalFrames != finalDuration * frameRate)) {
             wx.showToast({
                 title: '总张数和成片时长冲突只输入其中一个即可',
                 icon: 'none'
@@ -172,6 +228,33 @@ Page({
         this.resetUserInputs();
     },
 
+    storeCalculationResult(result) {
+        // 获取现有的历史记录
+        try {
+            let history = wx.getStorageSync('calculationHistory') || []
+        } catch (e) {
+            log.error(e)
+        };
+        // 添加新的计算结果
+        if (!Array.isArray(history)) {
+            history = []; // 确保 history 是一个数组
+        };
+        history.unshift(result);
+        // 只保留最近10条
+        if (history.length > 10) {
+            history = history.slice(0, 10);
+        }
+        // 将更新后的历史记录存储回本地
+        try {
+            wx.setStorageSync('calculationHistory', history)
+        } catch (e) {
+            log.error(e)
+        };
+        // 更新页面的数据
+        this.setData({
+            history
+        });
+    },
     resetUserInputs() {
         this.setData({
             userInputs: {
@@ -204,10 +287,35 @@ Page({
             showResetButton: false // 隐藏重置按钮
         });
     },
+    clearcache() {
+        try {
+            wx.clearStorageSync()
+        } catch (e) {
+            log.error(e)
+        }
+        try {
+            let history = wx.getStorageSync('calculationHistory') || [];
+            this.setData({
+                history
+            })
+        } catch (e) {
+            log.error(e)
+        };
+        log.info("[ClearCache]")
+    },
 
     onLoad() {
         this.setData({
             frameRate: this.data.frameRates[1] // 默认设置为25fps
         });
+        // 获取现有的历史记录
+        try {
+            let history = wx.getStorageSync('calculationHistory') || [];
+            this.setData({
+                history
+            })
+        } catch (e) {
+            log.error(e)
+        }
     }
 });

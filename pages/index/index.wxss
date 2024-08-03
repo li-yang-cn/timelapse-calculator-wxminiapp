@@ -22,7 +22,6 @@ input {
 }
 
 button {
-    width: 100%;
     background-color: #444444;
     color: #dddddd;
     border: none;
@@ -93,4 +92,35 @@ button {
     margin-top: 20px;
     text-align: center;
     font-size: 12px;
+}
+
+.history {
+    margin-top: 20px;
+    padding: 10px;
+    text-align: center;
+    font-size: 16px;
+}
+
+.history-title {
+    margin-bottom: 10px;
+}
+
+.table-header,
+.table-row {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    padding: 8px 0;
+}
+
+
+.table-cell {
+    flex: 1;
+    text-align: center;
+    padding: 4px 0;
+}
+
+.history-list {
+    display: flex;
+    flex-direction: column;
 }
