@@ -27,7 +27,6 @@ This WeChat Mini Program is a Timelapse Calculator that helps users determine th
 # To-Do
 - [x] Add Logging for debug 2024/7/20
 - [x] Add tips for use 2024/7/21
-- [x] Add version number
-- [x] Add a notification for conflict of Total Frame and Final Duration
-- [x] Add a local calculate history 
+- [x] Add a notification for conflict of Total Frame and Final Duration  2024/7/28
+- [x] Add a local calculate history  2024/8/3
 - [ ] Add more functions for timelapse
