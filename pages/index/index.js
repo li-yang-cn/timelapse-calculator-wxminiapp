@@ -4,7 +4,7 @@ Page({
     data: {
         duration: '', // 拍摄时长（分钟）
         finalDuration: '', // 成片时长（秒）
-        frameRate: 25, // 帧速率（fps），默认为24
+        frameRate: 25, // 帧速率（fps），默认为25
         interval: '', // 拍摄间隔（秒）
         totalFrames: '', // 总张数
         frameRates: [24, 25, 30, 60], // 可选帧速率
@@ -188,7 +188,7 @@ Page({
             Result-Duration: ${duration}`)
         } else if ((!isNaN(totalFrames) && !isNaN(finalDuration)) && (totalFrames != finalDuration * frameRate)) {
             wx.showToast({
-                title: '总张数和成片时长冲突只输入其中一个即可',
+                title: '参数冲突，可能输错了吧？',
                 icon: 'none'
             });
             log.info(`[ERROR1] Conflict:
@@ -199,7 +199,7 @@ Page({
             Result-Duration: ${duration}`)
         } else {
             wx.showToast({
-                title: '输入必要的参数进行计算',
+                title: '条件不足，算不了',
                 icon: 'none'
             });
             console.log(`[ERROR2] User input:
