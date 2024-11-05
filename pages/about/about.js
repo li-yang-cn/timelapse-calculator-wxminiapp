@@ -3,4 +3,14 @@ Page({
     onReady() {
         log.info(`[TIME]About page is Ready`);
     },
+    onShareAppMessage() {
+        return {
+          title: '延时摄影计算器·快速计算拍摄参数'
+        };
+      },
+    onShareTimeline(){
+        return {
+            title: '延时摄影计算器·快速计算拍摄参数'
+        }
+    }
 })
