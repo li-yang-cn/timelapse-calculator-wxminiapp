@@ -7,13 +7,13 @@
         <view class="row">
             <view class="icon">⏰</view>
             <view class="label">拍摄时长</view>
-            <input class="input" id="duration" type="digit" placeholder="输入分钟数" value="{{duration}}" bindinput="inputChange" />
+            <input class="input" id="duration" type="number" placeholder="输入分钟数" value="{{duration}}" bindinput="inputChange" />
             <view class="unit">分</view>
         </view>
         <view class="row">
             <view class="icon">🎬</view>
             <view class="label">成片时长</view>
-            <input class="input" id="finalDuration" type="digit" placeholder="输入秒数" value="{{finalDuration}}" bindinput="inputChange" />
+            <input class="input" id="finalDuration" type="number" placeholder="输入秒数" value="{{finalDuration}}" bindinput="inputChange" />
             <view class="unit">秒</view>
         </view>
         <view class="row">
@@ -27,7 +27,7 @@
         <view class="row">
             <view class="icon">🕙</view>
             <view class="label">拍摄间隔</view>
-            <input class="input" id="interval" type="number" placeholder="输入秒数" value="{{interval}}" bindinput="inputChange" />
+            <input class="input" id="interval" type="digit" placeholder="输入秒数" value="{{interval}}" bindinput="inputChange" />
             <view class="unit">秒</view>
         </view>
         <view class="row">
