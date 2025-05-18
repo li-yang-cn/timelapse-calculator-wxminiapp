@@ -2,7 +2,8 @@
     "pages": [
         "pages/index/index",
         "pages/instructions/instructions",
-        "pages/about/about"
+        "pages/about/about",
+        "pages/history/history"
     ],
     "window": {
         "navigationBarTextStyle": "white",
@@ -16,16 +17,16 @@
                 "selectedIconPath": "images/tool_selected.png"
             },
             {
+                "pagePath": "pages/history/history",
+                "text": "历史记录",
+                "iconPath": "images/history.png",
+                "selectedIconPath": "images/history_selected.png"
+            },
+            {
                 "pagePath": "pages/instructions/instructions",
                 "text": "使用说明",
                 "iconPath": "images/instructions.png",
                 "selectedIconPath": "images/instructions_selected.png"
-            },
-            {
-                "pagePath": "pages/about/about",
-                "text": "关于作者",
-                "iconPath": "images/about.png",
-                "selectedIconPath": "images/about_selected.png"
             }
         ],
         "color": "#AAAAAA",

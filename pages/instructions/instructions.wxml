@@ -1,15 +1,26 @@
 <view class="container">
     <view class="header">
         <view class="title">使用说明</view>
+    </view>
         <view class="body">
-            <text>👋 欢迎使用延时摄影计算器。\n</text>
+            <text>\n👋 欢迎使用延时摄影计算器。\n</text>
             <text>📱 计算：输入任意两个参数，点击“计算”按钮完成计算。\n</text>
             <text>🔘 重置：重新计算前，点击“重置”按钮即可。\n</text>
-            <text>🙇 感谢使用，祝您拍摄愉快！\n</text>
+            <text>🙇 感谢使用，祝您拍摄愉快！\n\n\n\n</text>
         </view>
-    </view>
-</view>
-
-<view class="footer">
-    <text class="version">v1.0.7</text>
+    
+    <!--<view class="title">关于作者</view>
+        <view class="body">
+            <text>Geek_Li\n</text>
+            <text>安全工程师\n</text>
+            <text>兼职摄影师\n</text>
+            <text>互联网从业者\n</text>
+            <text>喜欢探索世界\n</text>
+            <text>热爱通过影像记录生活\n</text>
+            <text>从不错过有趣的技术问题\n</text>
+            <text>能用程序解决的问题从不手动操作\n</text>
+            <text>欢迎在各平台搜索关注或联系我：“Geek_Lii”\n\n</text>
+            <text>本项目已开源 Github Project:\ntimelapse-calculator-wxminiapp\n\n</text>
+        </view>-->
+        <text class="version">v1.1.0</text>
 </view>

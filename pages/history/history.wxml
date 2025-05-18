@@ -1,0 +1,29 @@
+<view class="container">
+    <view class="header">
+        <view class="title">历史记录</view>
+    </view>
+<view class="history">
+    <view class="table-header">
+        <view class="table-cell"> 拍摄时长 </view>
+        <view class="table-cell"> 成片时长 </view>
+        <view class="table-cell"> 帧速率 </view>
+        <view class="table-cell"> 拍摄间隔 </view>
+        <view class="table-cell"> 总张数 </view>
+    </view>
+    <view class="history-list">
+        <block wx:for="{{history}}" wx:key="index">
+            <view class="table-row">
+                <view class="table-cell">{{item.duration}} 分</view>
+                <view class="table-cell">{{item.finalDuration}} 秒</view>
+                <view class="table-cell">{{item.frameRate}} fps</view>
+                <view class="table-cell">{{item.interval}} 秒</view>
+                <view class="table-cell">{{item.totalFrames}}</view>
+            </view>
+        </block>
+    </view>
+</view>
+
+<view class="buttons">
+    <button class="calc-button" bindtap="clearcache">清除</button>
+</view>
+</view>

@@ -9,7 +9,7 @@ section {
 label {
     display: block;
     margin-bottom: 10rpx;
-    font-size: 30rpx;
+    font-size: 30rpx; /* 正文字体 */
 }
 
 input {
@@ -29,7 +29,7 @@ button {
     color: #dddddd;
     border: none;
     border-radius: 10rpx;
-    font-size: 32rpx;
+    font-size: 32rpx; /* 按钮字体 */
 }
 
 .emoji {
@@ -39,7 +39,7 @@ button {
 }
 
 .title {
-    font-size: 36rpx;
+    font-size: 36rpx; /* 标题字体 */
     font-weight: bold;
 }
 
@@ -59,6 +59,10 @@ button {
     display: flex;
     align-items: center;
     margin: 15rpx;
+}
+
+.buttons {
+    display: flex;
 }
 
 .icon {
@@ -88,12 +92,19 @@ button {
 .tips {
     margin-top: 20rpx;
     text-align: center;
-    font-size: 24rpx;
+    font-size: 24rpx; /* 辅助提示字体 */
+}
+
+.history {
+    margin-top: 20rpx;
+    padding: 20rpx;
+    text-align: center;
+    font-size: 30rpx;
 }
 
 .history-title {
     margin-bottom: 10rpx;
-    font-size: 36rpx;
+    font-size: 36rpx; /* 标题字体 */
     font-weight: bold;
 }
 
@@ -107,9 +118,8 @@ button {
 }
 
 .table-cell {
-    flex: 1;
     text-align: center;
-    padding: 8rpx 0;
+    padding: 28rpx 0;
     font-size: 30rpx;
 }
 

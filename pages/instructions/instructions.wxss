@@ -1,27 +1,23 @@
 .container {
+    display: flex;
+    flex-direction: column;
     margin-left: 15%;
     margin-right: 15%;
 }
 
 .title {
     text-align: center;
-    font-size: 24px;
-    margin-top: 10px;
-    margin-bottom: 40px;
+    font-size: 36rpx; /* 原 24px，调整为标题标准 */
+    margin-top: 20rpx;
+    margin-bottom: 0rpx;
+    font-weight: bold;
 }
 
 .body {
     text-align: left;
-    margin-top: 10px;
-    text-indent: 0;
-    /* 取消自动首行缩进 */
-}
-
-.body text {
-    display: block;
-    margin: 15px 0;
-    /* 设置上下边距为10px */
-    text-align: justify;
+    margin-top: 10rpx;
+    font-size: 30rpx; /* 添加正文字体大小 */
+    text-indent: 0; /* 取消自动首行缩进 */
 }
 
 .footer {
@@ -29,7 +25,11 @@
     bottom: 0;
     left: 0;
     width: 100%;
-    height: 50px;
+    height: 100rpx; /* 原 50px，适当加高以匹配字体 */
     text-align: center;
-    font-size: 12px;
-  }
+    font-size: 24rpx; /* 原 12px，适配较小辅助信息 */
+}
+
+.version {
+    font-size: 24rpx;
+}
