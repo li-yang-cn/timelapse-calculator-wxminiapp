@@ -87,8 +87,8 @@ Page({
         // 下半部分
         ctx.setFontSize(18);
         ctx.setFillStyle('#444');
-        ctx.fillText('延时摄影参数由"延时摄影计算器"', 30, 250 + topOffset);
-        ctx.fillText('小程序计算得出', 30, 280 + topOffset);
+        ctx.fillText('长按或扫码使用“延时摄影计算器”小程序', 30, 340 + topOffset);
+        ctx.fillText('', 30, 280 + topOffset);
         // 绘制二维码
         ctx.drawImage('/images/qr_code.jpg', 400, 200 + topOffset, 160, 160);
         ctx.draw(false, () => {
