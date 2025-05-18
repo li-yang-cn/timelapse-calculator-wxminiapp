@@ -119,8 +119,11 @@ button {
 
 .table-cell {
     text-align: center;
-    padding: 28rpx 0;
+    padding: 0 8rpx;
     font-size: 30rpx;
+    white-space: nowrap;           /* 防止换行 */
+    text-overflow: ellipsis;       /* 显示省略号（可选） */
+    flex: 1;                        /* 或者 flex-basis: 16.6% 给每列均分宽度 */
 }
 
 .history-list {

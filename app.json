@@ -2,7 +2,6 @@
     "pages": [
         "pages/index/index",
         "pages/instructions/instructions",
-        "pages/about/about",
         "pages/history/history"
     ],
     "window": {

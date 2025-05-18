@@ -229,16 +229,17 @@ Page({
     },
 
     storeCalculationResult(result) {
+        let history = [];  // 在 try 块外声明
         // 获取现有的历史记录
         try {
-            let history = wx.getStorageSync('calculationHistory') || []
+            history = wx.getStorageSync('calculationHistory') || [];
         } catch (e) {
             log.error(e)
-        };
+        }
         // 添加新的计算结果
         if (!Array.isArray(history)) {
             history = []; // 确保 history 是一个数组
-        };
+        }
         history.unshift(result);
         // 只保留最近10条
         if (history.length > 10) {
@@ -249,11 +250,7 @@ Page({
             wx.setStorageSync('calculationHistory', history)
         } catch (e) {
             log.error(e)
-        };
-        // 更新页面的数据
-        this.setData({
-            history
-        });
+        }
     },
     resetUserInputs() {
         this.setData({
