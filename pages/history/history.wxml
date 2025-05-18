@@ -2,28 +2,40 @@
     <view class="header">
         <view class="title">历史记录</view>
     </view>
-<view class="history">
-    <view class="table-header">
-        <view class="table-cell"> 拍摄时长 </view>
-        <view class="table-cell"> 成片时长 </view>
-        <view class="table-cell"> 帧速率 </view>
-        <view class="table-cell"> 拍摄间隔 </view>
-        <view class="table-cell"> 总张数 </view>
+    <view class="history">
+        <view class="table-header">
+            <view class="table-cell"><text class="cell-text">拍摄时长</text></view>
+            <view class="table-cell"><text class="cell-text">成片时长</text></view>
+            <view class="table-cell"><text class="cell-text">帧速率</text></view>
+            <view class="table-cell"><text class="cell-text">拍摄间隔</text></view>
+            <view class="table-cell"><text class="cell-text">总张数</text></view>
+            <view class="table-cell"><text class="cell-text">分享</text></view>
+        </view>
+        <view class="history-list">
+            <block wx:for="{{history}}" wx:key="index">
+                <view class="table-row">
+                    <view class="table-cell"><text class="cell-text">{{item.duration}} 分</text></view>
+                    <view class="table-cell"><text class="cell-text">{{item.finalDuration}} 秒</text></view>
+                    <view class="table-cell"><text class="cell-text">{{item.frameRate}} fps</text></view>
+                    <view class="table-cell"><text class="cell-text">{{item.interval}} 秒</text></view>
+                    <view class="table-cell"><text class="cell-text">{{item.totalFrames}}</text></view>
+                    <view class="table-cell"><text class="cell-text share-icon" data-index="{{index}}" bindtap="onShareRecord">𝌆</text></view>
+                </view>
+            </block>
+        </view>
     </view>
-    <view class="history-list">
-        <block wx:for="{{history}}" wx:key="index">
-            <view class="table-row">
-                <view class="table-cell">{{item.duration}} 分</view>
-                <view class="table-cell">{{item.finalDuration}} 秒</view>
-                <view class="table-cell">{{item.frameRate}} fps</view>
-                <view class="table-cell">{{item.interval}} 秒</view>
-                <view class="table-cell">{{item.totalFrames}}</view>
-            </view>
-        </block>
-    </view>
-</view>
 
-<view class="buttons">
-    <button class="calc-button" bindtap="clearcache">清除</button>
-</view>
+    <view class="buttons">
+        <button class="calc-button" bindtap="clearcache">清除</button>
+    </view>
+
+    <view wx:if="{{showShareImage}}" class="share-image-modal" catchtap="closeShareImage">
+        <view class="share-image-mask"></view>
+        <view style="z-index:1003;display:flex;flex-direction:column;align-items:center;">
+            <image src="{{shareImagePath}}" class="share-image-preview" mode="widthFix" show-menu-by-longpress="true" />
+            <text class="save-tip">请长按保存图片</text>
+        </view>
+    </view>
+
+    <canvas canvas-id="shareCanvas" style="width:600px;height:400px;position:absolute;left:-9999px;top:-9999px;z-index:-1;" />
 </view>

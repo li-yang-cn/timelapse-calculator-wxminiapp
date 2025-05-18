@@ -1,53 +1,20 @@
-.functions {
-    margin: 30rpx;
-}
-
-section {
-    margin-bottom: 20rpx;
-}
-
-label {
-    display: block;
-    margin-bottom: 10rpx;
-    font-size: 30rpx; /* 正文字体 */
-}
-
-input {
-    width: 100%;
-    padding: 20rpx;
-    border-radius: 10rpx;
-    font-size: 30rpx;
-}
-
-.result {
-    margin-top: 20rpx;
-    font-size: 30rpx;
-}
-
 button {
     background-color: #444444;
     color: #dddddd;
     border: none;
     border-radius: 10rpx;
-    font-size: 32rpx; /* 按钮字体 */
+    font-size: 32rpx;
+    /* 按钮字体 */
 }
 
-.emoji {
-    margin-top: 30rpx;
-    width: 100rpx;
-    height: 100rpx;
-}
+
 
 .title {
-    font-size: 36rpx; /* 标题字体 */
+    font-size: 36rpx;
+    /* 标题字体 */
     font-weight: bold;
 }
 
-.reset {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
 
 .container {
     display: flex;
@@ -55,45 +22,9 @@ button {
     width: 100%;
 }
 
-.row {
-    display: flex;
-    align-items: center;
-    margin: 15rpx;
-}
 
-.buttons {
-    display: flex;
-}
 
-.icon {
-    flex: 1;
-    text-align: left;
-}
 
-.label {
-    flex: 10 2 10%;
-    text-align: left;
-    font-size: 30rpx;
-}
-
-.input,
-.picker {
-    flex: 8 5 20%;
-    text-align: right;
-    font-size: 30rpx;
-}
-
-.unit {
-    flex: 1;
-    text-align: left;
-    font-size: 30rpx;
-}
-
-.tips {
-    margin-top: 20rpx;
-    text-align: center;
-    font-size: 24rpx; /* 辅助提示字体 */
-}
 
 .history {
     margin-top: 20rpx;
@@ -104,7 +35,8 @@ button {
 
 .history-title {
     margin-bottom: 10rpx;
-    font-size: 36rpx; /* 标题字体 */
+    font-size: 36rpx;
+    /* 标题字体 */
     font-weight: bold;
 }
 
@@ -113,20 +45,73 @@ button {
     display: flex;
     flex-direction: row;
     justify-content: space-between;
-    padding: 16rpx 0;
-    font-size: 30rpx;
+    align-items: center;
+    min-height: 56rpx;
+    padding: 0;
 }
 
 .table-cell {
-    text-align: center;
-    padding: 0 8rpx;
-    font-size: 30rpx;
-    white-space: nowrap;           /* 防止换行 */
-    text-overflow: ellipsis;       /* 显示省略号（可选） */
-    flex: 1;                        /* 或者 flex-basis: 16.6% 给每列均分宽度 */
+    flex: 1;
+    display: grid;
+    align-items: center;
+    justify-content: center;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding: 0 15rpx;
 }
 
-.history-list {
+.cell-text {
+    text-align: center;
+    width: 100%;
+    vertical-align: middle;
+    font-size: 26rpx;
+}
+
+.table-header .cell-text {
+    font-weight: normal;
+    font-size: 26rpx;
+}
+
+.share-icon {
+    position: relative;
+    top: 2rpx;
+    cursor: pointer;
+}
+
+.share-image-modal {
+    position: fixed;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1000;
     display: flex;
-    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.share-image-mask {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1001;
+}
+
+.share-image-preview {
+    max-width: 80vw;
+    max-height: 80vh;
+    border-radius: 16rpx;
+    background: #fff;
+    z-index: 1002;
+    box-shadow: 0 4rpx 32rpx rgba(0, 0, 0, 0.2);
+}
+
+.save-tip {
+    margin-top: 3%;
+    font-size: small;
 }
