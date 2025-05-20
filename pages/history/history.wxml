@@ -19,14 +19,14 @@
                     <view class="table-cell"><text class="cell-text">{{item.frameRate}} fps</text></view>
                     <view class="table-cell"><text class="cell-text">{{item.interval}} 秒</text></view>
                     <view class="table-cell"><text class="cell-text">{{item.totalFrames}}</text></view>
-                    <view class="table-cell"><text class="cell-text share-icon" data-index="{{index}}" bindtap="onShareRecord">𝌆</text></view>
+                    <view class="table-cell"><text class="share-icon" data-index="{{index}}" bindtap="onShareRecord">🔘</text></view>
                 </view>
             </block>
         </view>
     </view>
 
     <view class="buttons">
-        <button class="calc-button" bindtap="clearcache">清除</button>
+        <button class="calc-button" bindtap="clearcache">清空</button>
     </view>
 
     <view wx:if="{{showShareImage}}" class="share-image-modal" catchtap="closeShareImage">

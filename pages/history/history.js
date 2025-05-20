@@ -98,12 +98,14 @@ Page({
                 height,
                 fileType: 'jpg',
                 success: (res) => {
+                    log.info(`[Sharing]绘制成功`);
                     this.setData({
                         shareImagePath: res.tempFilePath,
                         showShareImage: true
                     });
                 },
                 fail: (err) => {
+                    log.error(`[Sharing]绘制失败`);
                     wx.showToast({ title: '生成图片失败', icon: 'none' });
                 }
             }, this);
