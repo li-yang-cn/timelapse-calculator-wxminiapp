@@ -1,3 +1,12 @@
+/*
+ * 修改日志 - 2026-03-28
+ * 修复功能性 Bug:
+ * 1. FLOW-7: 修复 interval 计算使用硬编码 250 的问题，改为使用 totalFrames
+ * 2. FLOW-4/FLOW-5: 移除 frameRate 被重新计算覆盖的问题，保持用户选择的值
+ * 3. 浮点数比较：添加 EPSILON 容忍值，避免精度误判
+ * 4. storeCalculationResult: 修复 history 变量作用域问题，移到 try 块外
+ * 5. clearcache: 清空缓存后直接设置空数组，添加 toast 提示
+ */
 var log = require('../../utils/logs/logs')
 
 Page({
@@ -120,7 +129,6 @@ Page({
                 Result-Duration: ${duration}`)
         } else if (!isNaN(duration) && !isNaN(interval) && !isNaN(totalFrames) && !userInputs.finalDuration && !userInputs.frameRate) {
             finalDuration = parseFloat((totalFrames / frameRate).toFixed(2));
-            frameRate = Math.round(totalFrames / finalDuration);
             // 存储计算结果
             this.storeCalculationResult({
                 duration,
@@ -137,7 +145,6 @@ Page({
                 Result-FrameRate: ${frameRate} `)
         } else if (!isNaN(finalDuration) && !isNaN(interval) && !isNaN(totalFrames) && !userInputs.duration && !userInputs.frameRate) {
             duration = parseFloat(((totalFrames * interval) / 60).toFixed(2));
-            frameRate = Math.round(totalFrames / finalDuration);
             // 存储计算结果
             this.storeCalculationResult({
                 duration,
@@ -171,7 +178,7 @@ Page({
             Result-Duration: ${duration}`)
         } else if (!isNaN(duration) && !isNaN(frameRate) && !isNaN(totalFrames) && !userInputs.interval && !userInputs.finalDuration) {
             finalDuration = parseFloat(totalFrames / frameRate);
-            interval = parseFloat(duration * 60 / 250);
+            interval = parseFloat(((duration * 60) / totalFrames).toFixed(2));
             // 存储计算结果
             this.storeCalculationResult({
                 duration,
@@ -186,34 +193,37 @@ Page({
             FrameRate: ${frameRate},
             Result-FinalDuration: ${finalDuration}, 
             Result-Duration: ${duration}`)
-        } else if ((!isNaN(totalFrames) && !isNaN(finalDuration)) && (totalFrames != finalDuration * frameRate)) {
-            wx.showToast({
-                title: '总张数和成片时长冲突只输入其中一个即可',
-                icon: 'none'
-            });
-            log.info(`[ERROR1] Conflict:
+        } else if ((!isNaN(totalFrames) && !isNaN(finalDuration))) {
+            const EPSILON = 0.5;
+            if (Math.abs(totalFrames - finalDuration * frameRate) > EPSILON) {
+                wx.showToast({
+                    title: '总张数和成片时长冲突只输入其中一个即可',
+                    icon: 'none'
+                });
+                log.info(`[ERROR1] Conflict:
             Interval: ${interval},
             TotalFrames: ${totalFrames}, 
             FrameRate: ${frameRate},
             Result-FinalDuration: ${finalDuration}, 
             Result-Duration: ${duration}`)
-        } else {
-            wx.showToast({
-                title: '输入必要的参数进行计算',
-                icon: 'none'
-            });
-            console.log(`[ERROR2] User input:
+            } else {
+                wx.showToast({
+                    title: '输入必要的参数进行计算',
+                    icon: 'none'
+                });
+                console.log(`[ERROR2] User input:
             Interval: ${interval},
             TotalFrames: ${totalFrames}, 
             FrameRate: ${frameRate},
             FinalDuration: ${finalDuration}, 
             Duration: ${duration}`);
-            log.error(`[ERROR] User input:
+                log.error(`[ERROR] User input:
             Interval: ${interval},
             TotalFrames: ${totalFrames}, 
             FrameRate: ${frameRate},
             FinalDuration: ${finalDuration}, 
             Duration: ${duration}`)
+            }
         }
 
         this.setData({
@@ -230,8 +240,9 @@ Page({
 
     storeCalculationResult(result) {
         // 获取现有的历史记录
+        let history = [];
         try {
-            let history = wx.getStorageSync('calculationHistory') || []
+            history = wx.getStorageSync('calculationHistory') || []
         } catch (e) {
             log.error(e)
         };
@@ -293,14 +304,14 @@ Page({
         } catch (e) {
             log.error(e)
         }
-        try {
-            let history = wx.getStorageSync('calculationHistory') || [];
-            this.setData({
-                history
-            })
-        } catch (e) {
-            log.error(e)
-        };
+        // 清空后直接设置空数组并添加 toast 提示
+        this.setData({
+            history: []
+        });
+        wx.showToast({
+            title: '缓存已清空',
+            icon: 'success'
+        });
         log.info("[ClearCache]")
     },
 
