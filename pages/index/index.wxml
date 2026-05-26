@@ -4,45 +4,50 @@
         <image class="emoji" src="/images/logo.png"></image>
     </view>
     <view class="functions">
-        <view class="row">
+        <view class="row {{calculatedFields.duration ? 'calculated-row' : ''}}">
             <view class="icon">⏰</view>
             <view class="label">拍摄时长</view>
+            <view class="field-tag" wx:if="{{calculatedFields.duration}}">自动</view>
             <input class="input" id="duration" type="number" placeholder="输入分钟数" value="{{duration}}" bindinput="inputChange" />
             <view class="unit">分</view>
         </view>
-        <view class="row">
+        <view class="row {{calculatedFields.finalDuration ? 'calculated-row' : ''}}">
             <view class="icon">🎬</view>
             <view class="label">成片时长</view>
+            <view class="field-tag" wx:if="{{calculatedFields.finalDuration}}">自动</view>
             <input class="input" id="finalDuration" type="number" placeholder="输入秒数" value="{{finalDuration}}" bindinput="inputChange" />
             <view class="unit">秒</view>
         </view>
         <view class="row">
             <view class="icon">🎞️</view>
             <view class="label">帧速率</view>
-            <picker mode="selector" id="frameRate" bindchange="pickerChange" value="1" range="{{frameRates}}">
+            <picker mode="selector" id="frameRate" bindchange="pickerChange" value="{{frameRateIndex}}" range="{{frameRates}}">
                 <view class="picker">{{frameRate}}</view>
             </picker>
             <view class="unit">fps</view>
         </view>
-        <view class="row">
+        <view class="row {{calculatedFields.interval ? 'calculated-row' : ''}}">
             <view class="icon">🕙</view>
             <view class="label">拍摄间隔</view>
+            <view class="field-tag" wx:if="{{calculatedFields.interval}}">自动</view>
             <input class="input" id="interval" type="number" placeholder="输入秒数" value="{{interval}}" bindinput="inputChange" />
             <view class="unit">秒</view>
         </view>
-        <view class="row">
+        <view class="row {{calculatedFields.totalFrames ? 'calculated-row' : ''}}">
             <view class="icon">📃</view>
             <view class="label">总张数</view>
+            <view class="field-tag" wx:if="{{calculatedFields.totalFrames}}">自动</view>
             <input class="input" id="totalFrames" type="number" placeholder="输入张数" value="{{totalFrames}}" bindinput="inputChange" />
             <view class="unit">张</view>
         </view>
     </view>
     <view class="buttons">
-        <button class="calc-button" bindtap="calculate" wx:if="{{!showResetButton}}">计算</button>
+        <button class="calc-button" bindtap="calculate">{{isCalculated ? '重新计算' : '计算'}}</button>
+        <button class="copy-button" bindtap="copyResult" wx:if="{{lastResult}}">复制结果</button>
         <button class="reset-button" bindtap="reset" wx:if="{{showResetButton}}">重置</button>
     </view>
     <view class="tips">
-        <text class="tips">提示：输入任意两个参数即可计算，下滑可查看历史记录</text>
+        <text class="tips">提示：输入2-3个参数，留空需要计算的项</text>
     </view>
 </view>
 <view class="history">
@@ -56,17 +61,18 @@
     </view>
     <view class="history-list">
         <block wx:for="{{history}}" wx:key="index">
-            <view class="table-row">
+            <view class="table-row" bindtap="loadHistory" data-index="{{index}}">
                 <view class="table-cell">{{item.duration}} 分</view>
                 <view class="table-cell">{{item.finalDuration}} 秒</view>
                 <view class="table-cell">{{item.frameRate}} fps</view>
                 <view class="table-cell">{{item.interval}} 秒</view>
                 <view class="table-cell">{{item.totalFrames}}</view>
+                <button class="copy-mini-button" catchtap="copyResult" data-index="{{index}}">复制</button>
             </view>
         </block>
     </view>
 </view>
 
 <view class="buttons">
-    <button class="calc-button" bindtap="clearcache">清除</button>
+    <button class="clear-button" bindtap="clearcache">清空历史</button>
 </view>

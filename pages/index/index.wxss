@@ -61,6 +61,8 @@ button {
 
 .buttons {
     display: flex;
+    justify-content: center;
+    padding: 0 15px;
 }
 
 .icon {
@@ -73,6 +75,23 @@ button {
     flex: 10 2 10%;
     text-align: left;
     /* 确保标签左对齐 */
+}
+
+.field-tag {
+    min-width: 34px;
+    margin-right: 6px;
+    padding: 2px 4px;
+    border-radius: 4px;
+    background-color: #eeeeee;
+    color: #666666;
+    font-size: 11px;
+    line-height: 16px;
+    text-align: center;
+}
+
+.calculated-row .input,
+.calculated-row .picker {
+    color: #666666;
 }
 
 .input,
@@ -113,14 +132,37 @@ button {
     padding: 8px 0;
 }
 
+.table-row {
+    align-items: center;
+}
 
 .table-cell {
     flex: 1;
     text-align: center;
     padding: 4px 0;
+    font-size: 13px;
+    word-break: break-all;
 }
 
 .history-list {
     display: flex;
     flex-direction: column;
+}
+
+.calc-button,
+.reset-button,
+.copy-button,
+.clear-button {
+    flex: 1;
+    max-width: 120px;
+    margin: 0 5px;
+}
+
+.copy-mini-button {
+    width: 48px;
+    min-width: 48px;
+    margin: 0;
+    padding: 0;
+    font-size: 12px;
+    line-height: 28px;
 }
