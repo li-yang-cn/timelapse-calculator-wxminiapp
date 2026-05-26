@@ -10,20 +10,22 @@ Page({
         frameRates: [24, 25, 30, 60], // 可选帧速率
         frameRateIndex: 1, // 默认帧速率索引
         presets: [{
-                name: '云流动',
-                duration: 60,
-                finalDuration: 12,
-                frameRate: 25,
-                intervalRange: '8-15秒',
-                note: '适合云层移动明显的白天场景'
-            },
+            name: '云流动',
+            duration: 60,
+            finalDuration: 12,
+            frameRate: 25,
+            intervalRange: '8-15秒',
+            note: '适合云层移动明显的白天场景',
+            active: false
+        },
             {
                 name: '日落',
                 duration: 90,
                 finalDuration: 15,
                 frameRate: 25,
                 intervalRange: '10-20秒',
-                note: '适合太阳落山前后光线变化'
+                note: '适合太阳落山前后光线变化',
+                active: false
             },
             {
                 name: '星空',
@@ -31,7 +33,8 @@ Page({
                 finalDuration: 12,
                 frameRate: 25,
                 intervalRange: '30-40秒',
-                note: '建议手动对焦并准备外接供电'
+                note: '建议手动对焦并准备外接供电',
+                active: false
             },
             {
                 name: '车流',
@@ -39,7 +42,8 @@ Page({
                 finalDuration: 10,
                 frameRate: 25,
                 intervalRange: '1-3秒',
-                note: '适合城市道路和高架夜景'
+                note: '适合城市道路和高架夜景',
+                active: false
             },
             {
                 name: '人群',
@@ -47,7 +51,8 @@ Page({
                 finalDuration: 10,
                 frameRate: 25,
                 intervalRange: '2-5秒',
-                note: '适合广场、展会和街区流动'
+                note: '适合广场、展会和街区流动',
+                active: false
             },
             {
                 name: '植物',
@@ -55,7 +60,8 @@ Page({
                 finalDuration: 12,
                 frameRate: 25,
                 intervalRange: '60-300秒',
-                note: '适合长周期固定机位拍摄'
+                note: '适合长周期固定机位拍摄',
+                active: false
             }
         ],
         selectedPresetIndex: null,
@@ -113,6 +119,7 @@ Page({
             frameRateIndex: this.getFrameRateIndex(preset.frameRate),
             interval: '',
             totalFrames: '',
+            presets: this.getPresetActiveState(index),
             selectedPresetIndex: index,
             selectedPreset: preset,
             lastResult: null,
@@ -423,6 +430,7 @@ Page({
             frameRate: 25,
             interval: '',
             totalFrames: '',
+            presets: this.getPresetActiveState(null),
             selectedPresetIndex: null,
             selectedPreset: null,
             lastResult: null,
@@ -502,6 +510,12 @@ Page({
     getFrameRateIndex(frameRate) {
         const index = this.data.frameRates.indexOf(frameRate);
         return index === -1 ? this.data.frameRateIndex : index;
+    },
+
+    getPresetActiveState(activeIndex) {
+        return this.data.presets.map((preset, index) => Object.assign({}, preset, {
+            active: index === activeIndex
+        }));
     },
 
     getDefaultHistoryCalculatedFields() {

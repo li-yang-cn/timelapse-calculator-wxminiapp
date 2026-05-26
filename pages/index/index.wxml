@@ -8,7 +8,7 @@
         <scroll-view class="preset-scroll" scroll-x="true">
             <view class="preset-list">
                 <block wx:for="{{presets}}" wx:key="name">
-                    <view class="preset-card {{selectedPresetIndex === index ? 'preset-card-active' : ''}}" bindtap="applyPreset" data-index="{{index}}">
+                    <view class="preset-card {{item.active ? 'preset-card-active' : ''}}" bindtap="applyPreset" data-index="{{index}}">
                         <view class="preset-name">{{item.name}}</view>
                         <view class="preset-meta">{{item.duration}}分 / {{item.finalDuration}}秒</view>
                         <view class="preset-meta">{{item.frameRate}}fps · {{item.intervalRange}}</view>
