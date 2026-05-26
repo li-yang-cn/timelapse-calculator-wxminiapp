@@ -1,7 +1,7 @@
 {
   "appid": "wx3c63810098f74596",
   "compileType": "miniprogram",
-  "libVersion": "trial",
+  "libVersion": "3.10.0",
   "packOptions": {
     "ignore": [],
     "include": []
@@ -11,7 +11,7 @@
     "es6": true,
     "postcss": true,
     "minified": true,
-    "enhance": true,
+    "enhance": false,
     "showShadowRootInWxmlPanel": true,
     "packNpmRelationList": [],
     "babelSetting": {

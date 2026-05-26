@@ -3,6 +3,6 @@
   "projectname": "miniprogram-3",
   "setting": {
     "compileHotReLoad": true,
-    "skylineRenderEnable": true
+    "skylineRenderEnable": false
   }
 }
