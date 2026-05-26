@@ -9,57 +9,6 @@ Page({
         totalFrames: '', // 总张数
         frameRates: [24, 25, 30, 60], // 可选帧速率
         frameRateIndex: 1, // 默认帧速率索引
-        presets: [{
-                name: '云流动',
-                duration: 60,
-                finalDuration: 12,
-                frameRate: 25,
-                intervalRange: '8-15秒',
-                note: '适合云层移动明显的白天场景'
-            },
-            {
-                name: '日落',
-                duration: 90,
-                finalDuration: 15,
-                frameRate: 25,
-                intervalRange: '10-20秒',
-                note: '适合太阳落山前后光线变化'
-            },
-            {
-                name: '星空',
-                duration: 180,
-                finalDuration: 12,
-                frameRate: 25,
-                intervalRange: '30-40秒',
-                note: '建议手动对焦并准备外接供电'
-            },
-            {
-                name: '车流',
-                duration: 10,
-                finalDuration: 10,
-                frameRate: 25,
-                intervalRange: '1-3秒',
-                note: '适合城市道路和高架夜景'
-            },
-            {
-                name: '人群',
-                duration: 15,
-                finalDuration: 10,
-                frameRate: 25,
-                intervalRange: '2-5秒',
-                note: '适合广场、展会和街区流动'
-            },
-            {
-                name: '植物',
-                duration: 720,
-                finalDuration: 12,
-                frameRate: 25,
-                intervalRange: '60-300秒',
-                note: '适合长周期固定机位拍摄'
-            }
-        ],
-        selectedPresetIndex: null,
-        selectedPreset: null,
         history: [],
         lastResult: null,
         calculatedFields: {
@@ -97,46 +46,6 @@ Page({
             frameRateIndex: e.detail.value,
             'userInputs.frameRate': true
         }));
-    },
-
-    applyPreset(e) {
-        const index = Number(e.currentTarget.dataset.index);
-        const preset = this.data.presets[index];
-        if (!preset) {
-            return;
-        }
-
-        this.setData({
-            duration: String(preset.duration),
-            finalDuration: String(preset.finalDuration),
-            frameRate: preset.frameRate,
-            frameRateIndex: this.getFrameRateIndex(preset.frameRate),
-            interval: '',
-            totalFrames: '',
-            selectedPresetIndex: index,
-            selectedPreset: preset,
-            lastResult: null,
-            calculatedFields: {
-                duration: false,
-                finalDuration: false,
-                interval: false,
-                totalFrames: false
-            },
-            userInputs: {
-                duration: true,
-                finalDuration: true,
-                interval: false,
-                totalFrames: false,
-                frameRate: true,
-            },
-            isCalculated: false,
-            showResetButton: false
-        });
-
-        wx.showToast({
-            title: `已选择${preset.name}`,
-            icon: 'none'
-        });
     },
 
     calculate() {
@@ -423,8 +332,6 @@ Page({
             frameRate: 25,
             interval: '',
             totalFrames: '',
-            selectedPresetIndex: null,
-            selectedPreset: null,
             lastResult: null,
             calculatedFields: {
                 duration: false,
