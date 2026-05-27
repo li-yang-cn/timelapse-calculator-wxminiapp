@@ -14,19 +14,22 @@
             </view>
         </scroll-view>
     </view>
+    <view class="tips">
+        <text>输入2-3个已知参数，留空的项目会自动计算</text>
+    </view>
     <view class="functions">
         <view class="row {{calculatedFields.duration ? 'calculated-row' : ''}}">
             <view class="icon">⏰</view>
             <view class="label">拍摄时长</view>
             <view class="field-tag" wx:if="{{calculatedFields.duration}}">自动</view>
-            <input class="input" id="duration" type="number" placeholder="输入分钟数" value="{{duration}}" bindinput="inputChange" />
+            <input class="input" id="duration" type="number" placeholder="留空自动算" value="{{duration}}" bindinput="inputChange" />
             <view class="unit">分</view>
         </view>
         <view class="row {{calculatedFields.finalDuration ? 'calculated-row' : ''}}">
             <view class="icon">🎬</view>
             <view class="label">成片时长</view>
             <view class="field-tag" wx:if="{{calculatedFields.finalDuration}}">自动</view>
-            <input class="input" id="finalDuration" type="number" placeholder="输入秒数" value="{{finalDuration}}" bindinput="inputChange" />
+            <input class="input" id="finalDuration" type="number" placeholder="留空自动算" value="{{finalDuration}}" bindinput="inputChange" />
             <view class="unit">秒</view>
         </view>
         <view class="row">
@@ -41,49 +44,60 @@
             <view class="icon">🕙</view>
             <view class="label">拍摄间隔</view>
             <view class="field-tag" wx:if="{{calculatedFields.interval}}">自动</view>
-            <input class="input" id="interval" type="number" placeholder="输入秒数" value="{{interval}}" bindinput="inputChange" />
+            <input class="input" id="interval" type="number" placeholder="留空自动算" value="{{interval}}" bindinput="inputChange" />
             <view class="unit">秒</view>
         </view>
         <view class="row {{calculatedFields.totalFrames ? 'calculated-row' : ''}}">
             <view class="icon">📃</view>
             <view class="label">总张数</view>
             <view class="field-tag" wx:if="{{calculatedFields.totalFrames}}">自动</view>
-            <input class="input" id="totalFrames" type="number" placeholder="输入张数" value="{{totalFrames}}" bindinput="inputChange" />
+            <input class="input" id="totalFrames" type="number" placeholder="留空自动算" value="{{totalFrames}}" bindinput="inputChange" />
             <view class="unit">张</view>
         </view>
+    </view>
+    <view class="risk-panel" wx:if="{{riskWarnings.length}}">
+        <view class="risk-title">拍摄提醒</view>
+        <block wx:for="{{riskWarnings}}" wx:key="index">
+            <view class="risk-item">{{item}}</view>
+        </block>
     </view>
     <view class="buttons">
         <button class="calc-button" bindtap="calculate">{{isCalculated ? '重新计算' : '计算'}}</button>
         <button class="copy-button" bindtap="copyResult" wx:if="{{lastResult}}">复制结果</button>
         <button class="reset-button" bindtap="reset" wx:if="{{showResetButton}}">重置</button>
     </view>
-    <view class="tips">
-        <text class="tips">提示：输入2-3个参数，留空需要计算的项</text>
-    </view>
 </view>
 <view class="history">
-    <text class="history-title">历史记录（最近10条）</text>
-    <view class="table-header">
-        <view class="table-cell">拍摄时长</view>
-        <view class="table-cell">成片时长</view>
-        <view class="table-cell">帧速率</view>
-        <view class="table-cell">拍摄间隔</view>
-        <view class="table-cell">总张数</view>
+    <view class="history-bar" bindtap="toggleHistory">
+        <text class="history-title">历史记录（最近10条）</text>
+        <text class="history-toggle">{{historyExpanded ? '收起' : '展开'}}</text>
     </view>
-    <view class="history-list">
-        <block wx:for="{{history}}" wx:key="index">
-            <view wx:if="{{item}}" class="table-row" bindtap="loadHistory" data-index="{{index}}">
-                <view class="table-cell">{{item.duration}} 分</view>
-                <view class="table-cell">{{item.finalDuration}} 秒</view>
-                <view class="table-cell">{{item.frameRate}} fps</view>
-                <view class="table-cell">{{item.interval}} 秒</view>
-                <view class="table-cell">{{item.totalFrames}}</view>
-                <button class="copy-mini-button" catchtap="copyResult" data-index="{{index}}">复制</button>
+    <block wx:if="{{historyExpanded}}">
+        <view class="empty-history" wx:if="{{!history.length}}">暂无历史记录</view>
+        <block wx:else>
+            <view class="table-header">
+                <view class="table-cell">拍摄时长</view>
+                <view class="table-cell">成片时长</view>
+                <view class="table-cell">帧速率</view>
+                <view class="table-cell">拍摄间隔</view>
+                <view class="table-cell">总张数</view>
+            </view>
+            <view class="history-list">
+                <block wx:for="{{history}}" wx:key="index">
+                    <view wx:if="{{item}}" class="table-row" bindtap="loadHistory" data-index="{{index}}">
+                        <view class="table-cell">{{item.duration}} 分</view>
+                        <view class="table-cell">{{item.finalDuration}} 秒</view>
+                        <view class="table-cell">{{item.frameRate}} fps</view>
+                        <view class="table-cell">{{item.interval}} 秒</view>
+                        <view class="table-cell">{{item.totalFrames}}</view>
+                        <button class="copy-mini-button" catchtap="copyResult" data-index="{{index}}">复制</button>
+                    </view>
+                </block>
             </view>
         </block>
-    </view>
+    </block>
 </view>
 
-<view class="buttons">
+<view class="buttons history-actions" wx:if="{{historyExpanded}}">
     <button class="clear-button" bindtap="clearcache">清空历史</button>
 </view>

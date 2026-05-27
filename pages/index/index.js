@@ -67,7 +67,9 @@ Page({
         selectedPresetIndex: null,
         selectedPreset: null,
         history: [],
+        historyExpanded: false,
         lastResult: null,
+        riskWarnings: [],
         calculatedFields: {
             duration: false,
             finalDuration: false,
@@ -122,6 +124,7 @@ Page({
             selectedPresetIndex: index,
             selectedPreset: preset,
             lastResult: null,
+            riskWarnings: [],
             calculatedFields: {
                 duration: false,
                 finalDuration: false,
@@ -177,6 +180,7 @@ Page({
         const resultRecord = Object.assign({}, result.values, {
             calculatedFields
         });
+        const riskWarnings = this.getRiskWarnings(result.values);
         this.storeCalculationResult(resultRecord);
         log.info(`[CALC]
             Duration: ${duration},
@@ -191,6 +195,7 @@ Page({
             interval: interval.toFixed(2),
             totalFrames: Math.round(totalFrames),
             lastResult: resultRecord,
+            riskWarnings,
             calculatedFields,
             isCalculated: true, // 已生成可复制的计算结果
             showResetButton: true // 显示重置按钮
@@ -207,6 +212,7 @@ Page({
             isCalculated: false,
             showResetButton: false,
             lastResult: null,
+            riskWarnings: [],
             calculatedFields: {
                 duration: false,
                 finalDuration: false,
@@ -381,6 +387,25 @@ Page({
         };
     },
 
+    getRiskWarnings(result) {
+        const warnings = [];
+        const duration = Number(result.duration);
+        const interval = Number(result.interval);
+        const totalFrames = Number(result.totalFrames);
+
+        if (Number.isFinite(totalFrames) && totalFrames >= 1000) {
+            warnings.push('总张数较高，请提前确认存储空间、电量和设备稳定性');
+        }
+        if (Number.isFinite(interval) && interval <= 1) {
+            warnings.push('拍摄间隔很短，请确认快门速度、写入速度和缓存能力');
+        }
+        if (Number.isFinite(duration) && duration >= 180) {
+            warnings.push('拍摄时长较长，建议使用三脚架、外接供电并锁定构图');
+        }
+
+        return warnings;
+    },
+
     storeCalculationResult(result) {
         // 获取现有的历史记录
         let history = [];
@@ -440,6 +465,7 @@ Page({
             selectedPresetIndex: null,
             selectedPreset: null,
             lastResult: null,
+            riskWarnings: [],
             calculatedFields: {
                 duration: false,
                 finalDuration: false,
@@ -502,6 +528,7 @@ Page({
             interval: Number(item.interval).toFixed(2),
             totalFrames: Math.round(Number(item.totalFrames)),
             lastResult: item,
+            riskWarnings: this.getRiskWarnings(item),
             calculatedFields: item.calculatedFields || this.getDefaultHistoryCalculatedFields(),
             isCalculated: true,
             showResetButton: true
@@ -516,6 +543,12 @@ Page({
     getFrameRateIndex(frameRate) {
         const index = this.data.frameRates.indexOf(frameRate);
         return index === -1 ? this.data.frameRateIndex : index;
+    },
+
+    toggleHistory() {
+        this.setData({
+            historyExpanded: !this.data.historyExpanded
+        });
     },
 
     getDefaultHistoryCalculatedFields() {
