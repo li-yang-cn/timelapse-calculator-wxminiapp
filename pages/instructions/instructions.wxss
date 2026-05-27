@@ -1,35 +1,124 @@
 .container {
-    margin-left: 15%;
-    margin-right: 15%;
+    min-height: 100vh;
+    padding: 36rpx 32rpx 80rpx;
+    box-sizing: border-box;
 }
 
 .title {
+    margin-top: 10rpx;
+    color: #ffffff;
+    font-size: 26px;
+    font-weight: 600;
     text-align: center;
-    font-size: 24px;
-    margin-top: 10px;
-    margin-bottom: 40px;
 }
 
-.body {
-    text-align: left;
-    margin-top: 10px;
-    text-indent: 0;
-    /* 取消自动首行缩进 */
+.subtitle {
+    margin: 18rpx auto 34rpx;
+    max-width: 620rpx;
+    color: #aaaaaa;
+    font-size: 14px;
+    line-height: 1.6;
+    text-align: center;
 }
 
-.body text {
-    display: block;
-    margin: 15px 0;
-    /* 设置上下边距为10px */
-    text-align: justify;
+.section {
+    margin-bottom: 24rpx;
+    padding: 24rpx;
+    border-radius: 6px;
+    background-color: #2b2b2b;
+}
+
+.section-title {
+    margin-bottom: 18rpx;
+    color: #ffffff;
+    font-size: 17px;
+    font-weight: 600;
+}
+
+.step {
+    display: flex;
+    align-items: flex-start;
+    margin-top: 16rpx;
+}
+
+.step-index {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36rpx;
+    height: 36rpx;
+    min-width: 36rpx;
+    margin-right: 16rpx;
+    border-radius: 50%;
+    background-color: #444444;
+    color: #ffffff;
+    font-size: 12px;
+    line-height: 36rpx;
+}
+
+.step-content,
+.info-text,
+.param-desc,
+.bullet {
+    color: #dddddd;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.info-row {
+    margin-top: 18rpx;
+}
+
+.info-label {
+    margin-bottom: 6rpx;
+    color: #ffffff;
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.param-row {
+    display: flex;
+    align-items: flex-start;
+    padding: 16rpx 0;
+    border-bottom: 1px solid #3a3a3a;
+}
+
+.param-row:last-child {
+    border-bottom: none;
+}
+
+.param-name {
+    width: 160rpx;
+    min-width: 160rpx;
+    color: #ffffff;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.param-desc {
+    flex: 1;
+}
+
+.bullet {
+    position: relative;
+    margin-top: 12rpx;
+    padding-left: 22rpx;
+}
+
+.bullet::before {
+    position: absolute;
+    top: 17rpx;
+    left: 2rpx;
+    width: 8rpx;
+    height: 8rpx;
+    border-radius: 50%;
+    background-color: #888888;
+    content: "";
 }
 
 .footer {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    height: 50px;
+    margin-top: 34rpx;
+    color: #888888;
     text-align: center;
     font-size: 12px;
-  }
+}

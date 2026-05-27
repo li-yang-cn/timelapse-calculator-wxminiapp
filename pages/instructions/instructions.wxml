@@ -1,15 +1,74 @@
 <view class="container">
-    <view class="header">
-        <view class="title">使用说明</view>
-        <view class="body">
-            <text>👋 欢迎使用延时摄影计算器。\n</text>
-            <text>📱 计算：输入任意两个参数，点击“计算”按钮完成计算。\n</text>
-            <text>🔘 重置：重新计算前，点击“重置”按钮即可。\n</text>
-            <text>🙇 感谢使用，祝您拍摄愉快！\n</text>
+    <view class="title">使用说明</view>
+    <view class="subtitle">用于快速规划延时摄影的拍摄时长、成片时长、帧速率、拍摄间隔和总张数。</view>
+
+    <view class="section">
+        <view class="section-title">快速开始</view>
+        <view class="step">
+            <view class="step-index">1</view>
+            <view class="step-content">点击首页上方的场景图标，可直接生成常用拍摄方案。</view>
+        </view>
+        <view class="step">
+            <view class="step-index">2</view>
+            <view class="step-content">也可以手动输入 2-3 个已知参数，留空需要自动计算的项目。</view>
+        </view>
+        <view class="step">
+            <view class="step-index">3</view>
+            <view class="step-content">点击“计算”后，系统会补齐剩余参数，并标记“自动”字段。</view>
         </view>
     </view>
-</view>
 
-<view class="footer">
-    <text class="version">v1.0.5</text>
+    <view class="section">
+        <view class="section-title">两种计算方式</view>
+        <view class="info-row">
+            <view class="info-label">场景预设</view>
+            <view class="info-text">适合快速开始。选择云流动、日落、星空、车流、人群、植物等图标后，会自动生成完整参数。</view>
+        </view>
+        <view class="info-row">
+            <view class="info-label">手动计算</view>
+            <view class="info-text">适合已有明确拍摄目标。输入任意 2-3 个参数，系统会根据延时摄影公式计算其余项目。</view>
+        </view>
+    </view>
+
+    <view class="section">
+        <view class="section-title">参数说明</view>
+        <view class="param-row">
+            <view class="param-name">拍摄时长</view>
+            <view class="param-desc">相机或手机实际持续拍摄的时间，单位为分钟。</view>
+        </view>
+        <view class="param-row">
+            <view class="param-name">成片时长</view>
+            <view class="param-desc">最终视频播放出来的长度，单位为秒。</view>
+        </view>
+        <view class="param-row">
+            <view class="param-name">帧速率</view>
+            <view class="param-desc">视频每秒播放的画面数量，常用 24、25、30、60 fps。</view>
+        </view>
+        <view class="param-row">
+            <view class="param-name">拍摄间隔</view>
+            <view class="param-desc">每两张照片之间的时间间隔，单位为秒。</view>
+        </view>
+        <view class="param-row">
+            <view class="param-name">总张数</view>
+            <view class="param-desc">本次拍摄需要获得的照片数量。</view>
+        </view>
+    </view>
+
+    <view class="section">
+        <view class="section-title">结果与提醒</view>
+        <view class="bullet">“自动”标签表示该字段由系统计算得出，不是手动输入。</view>
+        <view class="bullet">当总张数较高、间隔过短或拍摄时间较长时，会显示拍摄提醒。</view>
+        <view class="bullet">如果参数互相冲突，页面会提示原因，并显示“重置”按钮方便重新输入。</view>
+    </view>
+
+    <view class="section">
+        <view class="section-title">复制与历史</view>
+        <view class="bullet">计算完成后可复制完整拍摄方案，方便保存或发送给同伴。</view>
+        <view class="bullet">历史记录默认折叠，展开后可回填最近 10 条方案。</view>
+        <view class="bullet">历史记录保存在本机，清空后不会影响再次计算。</view>
+    </view>
+
+    <view class="footer">
+        <text class="version">v1.1.0</text>
+    </view>
 </view>

@@ -1,6 +1,6 @@
 var log = require('../../utils/logs/logs')
 
-const APP_VERSION = '1.0.5';
+const APP_VERSION = '1.1.0';
 
 Page({
     data: {
