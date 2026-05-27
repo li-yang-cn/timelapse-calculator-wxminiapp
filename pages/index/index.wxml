@@ -3,6 +3,23 @@
     <view class="logo">
         <image class="emoji" src="/images/logo.png"></image>
     </view>
+    <view class="presets">
+        <view class="section-title">场景预设</view>
+        <scroll-view class="preset-scroll" scroll-x="true">
+            <view class="preset-list">
+                <block wx:for="{{presets}}" wx:key="name">
+                    <view class="preset-card {{selectedPresetIndex === index ? 'preset-card-active' : ''}}" bindtap="applyPreset" data-index="{{index}}">
+                        <view class="preset-name">{{item.name}}</view>
+                        <view class="preset-meta">{{item.duration}}分 / {{item.finalDuration}}秒</view>
+                        <view class="preset-meta">{{item.frameRate}}fps · {{item.intervalRange}}</view>
+                    </view>
+                </block>
+            </view>
+        </scroll-view>
+        <view class="preset-note" wx:if="{{selectedPreset}}">
+            <text>{{selectedPreset.name}}：{{selectedPreset.note}}</text>
+        </view>
+    </view>
     <view class="functions">
         <view class="row {{calculatedFields.duration ? 'calculated-row' : ''}}">
             <view class="icon">⏰</view>

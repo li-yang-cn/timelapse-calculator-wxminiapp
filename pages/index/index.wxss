@@ -40,6 +40,12 @@ button {
     font-size: 28px;
 }
 
+.section-title {
+    margin: 0 15px 10px;
+    font-size: 16px;
+    font-weight: bold;
+}
+
 .reset {
     display: flex;
     justify-content: center;
@@ -51,6 +57,56 @@ button {
     display: flex;
     flex-direction: column;
     width: 100%;
+}
+
+.presets {
+    margin-top: 20px;
+}
+
+.preset-scroll {
+    width: 100%;
+    white-space: nowrap;
+}
+
+.preset-list {
+    display: inline-flex;
+    padding: 0 15px;
+}
+
+.preset-card {
+    width: 108px;
+    min-width: 108px;
+    margin-right: 10px;
+    padding: 10px 8px;
+    border: 1px solid #dddddd;
+    border-radius: 6px;
+    background-color: #f8f8f8;
+    color: #333333;
+}
+
+.preset-card-active {
+    border-color: #444444;
+    background-color: #eeeeee;
+}
+
+.preset-name {
+    margin-bottom: 6px;
+    font-size: 15px;
+    font-weight: bold;
+}
+
+.preset-meta {
+    margin-top: 3px;
+    color: #666666;
+    font-size: 11px;
+    line-height: 16px;
+}
+
+.preset-note {
+    margin: 10px 15px 0;
+    color: #666666;
+    font-size: 12px;
+    line-height: 18px;
 }
 
 .row {
