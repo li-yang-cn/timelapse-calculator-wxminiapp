@@ -40,12 +40,6 @@ button {
     font-size: 28px;
 }
 
-.section-title {
-    margin: 0 15px 10px;
-    font-size: 16px;
-    font-weight: bold;
-}
-
 .reset {
     display: flex;
     justify-content: center;
@@ -60,7 +54,7 @@ button {
 }
 
 .presets {
-    margin-top: 20px;
+    margin-top: 18px;
 }
 
 .preset-scroll {
@@ -70,43 +64,27 @@ button {
 
 .preset-list {
     display: inline-flex;
-    padding: 0 15px;
+    padding: 0 18px;
 }
 
-.preset-card {
-    width: 108px;
-    min-width: 108px;
-    margin-right: 10px;
-    padding: 10px 8px;
+.preset-emoji {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
     border: 1px solid #dddddd;
-    border-radius: 6px;
-    background-color: #f8f8f8;
-    color: #333333;
+    border-radius: 50%;
+    background-color: #ffffff;
+    font-size: 24px;
+    line-height: 44px;
+    margin-right: 10px;
 }
 
-.preset-card-active {
+.preset-emoji-active {
     border-color: #444444;
     background-color: #eeeeee;
-}
-
-.preset-name {
-    margin-bottom: 6px;
-    font-size: 15px;
-    font-weight: bold;
-}
-
-.preset-meta {
-    margin-top: 3px;
-    color: #666666;
-    font-size: 11px;
-    line-height: 16px;
-}
-
-.preset-note {
-    margin: 10px 15px 0;
-    color: #666666;
-    font-size: 12px;
-    line-height: 18px;
 }
 
 .row {

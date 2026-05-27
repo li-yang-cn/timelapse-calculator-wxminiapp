@@ -10,6 +10,7 @@ Page({
         frameRates: [24, 25, 30, 60], // 可选帧速率
         frameRateIndex: 1, // 默认帧速率索引
         presets: [{
+                emoji: '☁️',
                 name: '云流动',
                 duration: 60,
                 finalDuration: 12,
@@ -18,6 +19,7 @@ Page({
                 note: '适合云层移动明显的白天场景'
             },
             {
+                emoji: '🌇',
                 name: '日落',
                 duration: 90,
                 finalDuration: 15,
@@ -26,6 +28,7 @@ Page({
                 note: '适合太阳落山前后光线变化'
             },
             {
+                emoji: '🌌',
                 name: '星空',
                 duration: 180,
                 finalDuration: 12,
@@ -34,6 +37,7 @@ Page({
                 note: '建议手动对焦并准备外接供电'
             },
             {
+                emoji: '🚗',
                 name: '车流',
                 duration: 10,
                 finalDuration: 10,
@@ -42,6 +46,7 @@ Page({
                 note: '适合城市道路和高架夜景'
             },
             {
+                emoji: '🚶',
                 name: '人群',
                 duration: 15,
                 finalDuration: 10,
@@ -50,6 +55,7 @@ Page({
                 note: '适合广场、展会和街区流动'
             },
             {
+                emoji: '🌱',
                 name: '植物',
                 duration: 720,
                 finalDuration: 12,
