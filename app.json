@@ -1,8 +1,7 @@
 {
     "pages": [
         "pages/index/index",
-        "pages/instructions/instructions",
-        "pages/about/about"
+        "pages/instructions/instructions"
     ],
     "window": {
         "navigationBarTextStyle": "white",
@@ -20,12 +19,6 @@
                 "text": "使用说明",
                 "iconPath": "images/instructions.png",
                 "selectedIconPath": "images/instructions_selected.png"
-            },
-            {
-                "pagePath": "pages/about/about",
-                "text": "关于作者",
-                "iconPath": "images/about.png",
-                "selectedIconPath": "images/about_selected.png"
             }
         ],
         "color": "#AAAAAA",
