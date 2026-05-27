@@ -120,6 +120,10 @@ button {
     text-align: center;
 }
 
+.field-tag-hidden {
+    visibility: hidden;
+}
+
 .calculated-row .input,
 .calculated-row .picker {
     color: #666666;
