@@ -61,7 +61,7 @@
     </view>
     <view class="history-list">
         <block wx:for="{{history}}" wx:key="index">
-            <view class="table-row" bindtap="loadHistory" data-index="{{index}}">
+            <view wx:if="{{item}}" class="table-row" bindtap="loadHistory" data-index="{{index}}">
                 <view class="table-cell">{{item.duration}} 分</view>
                 <view class="table-cell">{{item.finalDuration}} 秒</view>
                 <view class="table-cell">{{item.frameRate}} fps</view>

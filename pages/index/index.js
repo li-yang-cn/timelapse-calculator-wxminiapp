@@ -292,10 +292,7 @@ Page({
         } catch (e) {
             log.error(e)
         };
-        // 添加新的计算结果
-        if (!Array.isArray(history)) {
-            history = []; // 确保 history 是一个数组
-        };
+        history = this.normalizeHistory(history);
         history.unshift(result);
         // 只保留最近10条
         if (history.length > 10) {
@@ -312,6 +309,17 @@ Page({
             history
         });
     },
+
+    normalizeHistory(history) {
+        if (!Array.isArray(history)) {
+            return [];
+        }
+
+        return history.filter((item) => {
+            return item && typeof item === 'object';
+        });
+    },
+
     resetUserInputs() {
         this.setData({
             userInputs: {
@@ -453,6 +461,8 @@ Page({
         // 获取现有的历史记录
         try {
             let history = wx.getStorageSync('calculationHistory') || [];
+            history = this.normalizeHistory(history);
+            wx.setStorageSync('calculationHistory', history);
             this.setData({
                 history
             })
