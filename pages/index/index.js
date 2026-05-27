@@ -116,6 +116,14 @@ Page({
         });
     },
 
+    showResetForFailedCalculation() {
+        if (this.getCurrentProvidedFields().length > 0) {
+            this.setData({
+                showResetButton: true
+            });
+        }
+    },
+
     getCalculatedFieldNames(calculatedFields) {
         return Object.keys(calculatedFields || {}).filter((field) => {
             return calculatedFields[field];
@@ -250,6 +258,7 @@ Page({
                 icon: 'none'
             });
             log.error(`[ERROR] ${parsed.message}`);
+            this.showResetForFailedCalculation();
             this.track('calculate_failed', {
                 source: 'manual',
                 reason: parsed.message,
@@ -265,6 +274,7 @@ Page({
                 icon: 'none'
             });
             log.error(`[ERROR] ${result.message}`);
+            this.showResetForFailedCalculation();
             this.track('calculate_failed', {
                 source: 'manual',
                 reason: result.message,
