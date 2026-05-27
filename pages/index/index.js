@@ -114,36 +114,55 @@ Page({
             return;
         }
 
-        this.setData({
-            duration: String(preset.duration),
-            finalDuration: String(preset.finalDuration),
+        const providedFields = ['duration', 'finalDuration'];
+        const result = this.resolveCalculation({
+            duration: preset.duration,
+            finalDuration: preset.finalDuration,
             frameRate: preset.frameRate,
-            frameRateIndex: this.getFrameRateIndex(preset.frameRate),
-            interval: '',
-            totalFrames: '',
-            selectedPresetIndex: index,
-            selectedPreset: preset,
-            lastResult: null,
-            riskWarnings: [],
-            calculatedFields: {
-                duration: false,
-                finalDuration: false,
-                interval: false,
-                totalFrames: false
-            },
-            userInputs: {
-                duration: true,
-                finalDuration: true,
-                interval: false,
-                totalFrames: false,
-                frameRate: true,
-            },
-            isCalculated: false,
-            showResetButton: false
+            interval: null,
+            totalFrames: null,
+            providedFields
+        });
+        if (!result.isValid) {
+            wx.showToast({
+                title: result.message,
+                icon: 'none'
+            });
+            log.error(`[ERROR] ${result.message}`);
+            return;
+        }
+
+        const {
+            duration,
+            finalDuration,
+            frameRate,
+            interval,
+            totalFrames
+        } = result.values;
+        const calculatedFields = this.getCalculatedFields(providedFields);
+        const resultRecord = Object.assign({}, result.values, {
+            calculatedFields
         });
 
+        this.setData({
+            duration: duration.toFixed(2),
+            finalDuration: finalDuration.toFixed(2),
+            frameRate: Math.round(frameRate),
+            frameRateIndex: this.getFrameRateIndex(preset.frameRate),
+            interval: interval.toFixed(2),
+            totalFrames: Math.round(totalFrames),
+            selectedPresetIndex: index,
+            selectedPreset: preset,
+            lastResult: resultRecord,
+            riskWarnings: this.getRiskWarnings(result.values),
+            calculatedFields,
+            isCalculated: true,
+            showResetButton: true
+        });
+        this.resetUserInputs();
+
         wx.showToast({
-            title: `已选择${preset.name}`,
+            title: `已生成${preset.name}`,
             icon: 'none'
         });
     },
