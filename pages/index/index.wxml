@@ -15,7 +15,7 @@
         </scroll-view>
     </view>
     <view class="tips">
-        <text>输入2-3个已知参数，留空的项目会自动计算</text>
+        <text>点击图标或输入2-3个已知参数，留空的项目会自动计算</text>
     </view>
     <view class="functions">
         <view class="row {{calculatedFields.duration ? 'calculated-row' : ''}}">

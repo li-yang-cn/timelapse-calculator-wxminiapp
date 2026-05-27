@@ -1,5 +1,7 @@
 var log = require('../../utils/logs/logs')
 
+const APP_VERSION = '1.0.5';
+
 Page({
     data: {
         duration: '', // 拍摄时长（分钟）
@@ -70,6 +72,7 @@ Page({
         historyExpanded: false,
         lastResult: null,
         riskWarnings: [],
+        sessionId: '',
         calculatedFields: {
             duration: false,
             finalDuration: false,
@@ -89,6 +92,52 @@ Page({
     onReady() {
         log.info(`[TIME]Index page is Ready`);
     },
+
+    track(event, payload) {
+        log.info('[EVENT]', JSON.stringify({
+            event,
+            ts: Date.now(),
+            page: 'index',
+            appVersion: APP_VERSION,
+            sessionId: this.data.sessionId,
+            payload: payload || {}
+        }));
+    },
+
+    createSessionId() {
+        return `s_${Date.now()}_${Math.floor(Math.random() * 1000000)}`;
+    },
+
+    getCurrentProvidedFields() {
+        const fields = ['duration', 'finalDuration', 'interval', 'totalFrames'];
+        return fields.filter((field) => {
+            const value = this.data[field];
+            return value !== '' && value !== null && value !== undefined;
+        });
+    },
+
+    getCalculatedFieldNames(calculatedFields) {
+        return Object.keys(calculatedFields || {}).filter((field) => {
+            return calculatedFields[field];
+        });
+    },
+
+    getCalculationPayload(options) {
+        const result = options.result;
+        return {
+            source: options.source,
+            providedFields: options.providedFields,
+            calculatedFields: this.getCalculatedFieldNames(options.calculatedFields),
+            duration: result.duration,
+            finalDuration: result.finalDuration,
+            frameRate: result.frameRate,
+            interval: result.interval,
+            totalFrames: result.totalFrames,
+            riskWarningCount: options.riskWarnings.length,
+            riskWarningTypes: this.getRiskWarningTypes(result)
+        };
+    },
+
     inputChange(e) {
         const id = e.currentTarget.id;
         const patch = this.getEditPatch(id);
@@ -129,6 +178,13 @@ Page({
                 icon: 'none'
             });
             log.error(`[ERROR] ${result.message}`);
+            this.track('calculate_failed', {
+                source: 'preset',
+                presetName: preset.name,
+                presetIndex: index,
+                reason: result.message,
+                providedFields
+            });
             return;
         }
 
@@ -143,6 +199,8 @@ Page({
         const resultRecord = Object.assign({}, result.values, {
             calculatedFields
         });
+        const riskWarnings = this.getRiskWarnings(result.values);
+        this.storeCalculationResult(resultRecord);
 
         this.setData({
             duration: duration.toFixed(2),
@@ -154,12 +212,29 @@ Page({
             selectedPresetIndex: index,
             selectedPreset: preset,
             lastResult: resultRecord,
-            riskWarnings: this.getRiskWarnings(result.values),
+            riskWarnings,
             calculatedFields,
             isCalculated: true,
             showResetButton: true
         });
         this.resetUserInputs();
+        this.track('preset_select', {
+            presetName: preset.name,
+            presetIndex: index,
+            duration,
+            finalDuration,
+            frameRate,
+            interval,
+            totalFrames
+        });
+        this.track('calculate_success', this.getCalculationPayload({
+            source: 'preset',
+            result: result.values,
+            providedFields,
+            calculatedFields,
+            riskWarnings
+        }));
+        this.trackRiskWarnings(result.values);
 
         wx.showToast({
             title: `已生成${preset.name}`,
@@ -175,6 +250,11 @@ Page({
                 icon: 'none'
             });
             log.error(`[ERROR] ${parsed.message}`);
+            this.track('calculate_failed', {
+                source: 'manual',
+                reason: parsed.message,
+                providedFields: this.getCurrentProvidedFields()
+            });
             return;
         }
 
@@ -185,6 +265,11 @@ Page({
                 icon: 'none'
             });
             log.error(`[ERROR] ${result.message}`);
+            this.track('calculate_failed', {
+                source: 'manual',
+                reason: result.message,
+                providedFields: parsed.values.providedFields
+            });
             return;
         }
 
@@ -220,6 +305,14 @@ Page({
             showResetButton: true // 显示重置按钮
         });
         this.resetUserInputs();
+        this.track('calculate_success', this.getCalculationPayload({
+            source: 'manual',
+            result: result.values,
+            providedFields: parsed.values.providedFields,
+            calculatedFields,
+            riskWarnings
+        }));
+        this.trackRiskWarnings(result.values);
     },
 
     getEditPatch(editedField) {
@@ -406,23 +499,49 @@ Page({
         };
     },
 
-    getRiskWarnings(result) {
-        const warnings = [];
+    getRiskWarningTypes(result) {
+        const warningTypes = [];
         const duration = Number(result.duration);
         const interval = Number(result.interval);
         const totalFrames = Number(result.totalFrames);
 
         if (Number.isFinite(totalFrames) && totalFrames >= 1000) {
-            warnings.push('总张数较高，请提前确认存储空间、电量和设备稳定性');
+            warningTypes.push('high_total_frames');
         }
         if (Number.isFinite(interval) && interval <= 1) {
-            warnings.push('拍摄间隔很短，请确认快门速度、写入速度和缓存能力');
+            warningTypes.push('short_interval');
         }
         if (Number.isFinite(duration) && duration >= 180) {
-            warnings.push('拍摄时长较长，建议使用三脚架、外接供电并锁定构图');
+            warningTypes.push('long_duration');
         }
 
-        return warnings;
+        return warningTypes;
+    },
+
+    getRiskWarnings(result) {
+        const warningMessages = {
+            high_total_frames: '总张数较高，请提前确认存储空间、电量和设备稳定性',
+            short_interval: '拍摄间隔很短，请确认快门速度、写入速度和缓存能力',
+            long_duration: '拍摄时长较长，建议使用三脚架、外接供电并锁定构图'
+        };
+
+        return this.getRiskWarningTypes(result).map((type) => {
+            return warningMessages[type];
+        }).filter((message) => {
+            return !!message;
+        });
+    },
+
+    trackRiskWarnings(result) {
+        const warningTypes = this.getRiskWarningTypes(result);
+        if (warningTypes.length > 0) {
+            this.track('risk_warning_show', {
+                warningTypes,
+                duration: result.duration,
+                interval: result.interval,
+                totalFrames: result.totalFrames
+            });
+        }
     },
 
     storeCalculationResult(result) {
@@ -519,6 +638,7 @@ Page({
                 if (!res.confirm) {
                     return;
                 }
+                const historyCount = this.data.history.length;
                 try {
                     wx.removeStorageSync('calculationHistory')
                 } catch (e) {
@@ -526,6 +646,9 @@ Page({
                 }
                 this.setData({
                     history: []
+                });
+                this.track('history_clear', {
+                    historyCount
                 });
                 log.info("[ClearCache]")
             }
@@ -553,6 +676,14 @@ Page({
             showResetButton: true
         });
         this.resetUserInputs();
+        this.track('history_load', {
+            index,
+            duration: Number(item.duration),
+            finalDuration: Number(item.finalDuration),
+            frameRate: Number(item.frameRate),
+            interval: Number(item.interval),
+            totalFrames: Number(item.totalFrames)
+        });
         wx.showToast({
             title: '已回填历史记录',
             icon: 'none'
@@ -565,8 +696,12 @@ Page({
     },
 
     toggleHistory() {
+        const nextExpanded = !this.data.historyExpanded;
         this.setData({
-            historyExpanded: !this.data.historyExpanded
+            historyExpanded: nextExpanded
+        });
+        this.track(nextExpanded ? 'history_expand' : 'history_collapse', {
+            historyCount: this.data.history.length
         });
     },
 
@@ -593,6 +728,10 @@ Page({
         wx.setClipboardData({
             data: this.formatResult(result),
             success: () => {
+                this.track('copy_result', {
+                    source: index !== undefined ? 'history' : 'current',
+                    hasRiskWarnings: this.getRiskWarningTypes(result).length > 0
+                });
                 wx.showToast({
                     title: '已复制结果',
                     icon: 'success'
@@ -606,8 +745,10 @@ Page({
     },
 
     onLoad() {
+        const sessionId = this.createSessionId();
         this.setData({
-            frameRate: this.data.frameRates[1] // 默认设置为25fps
+            frameRate: this.data.frameRates[1], // 默认设置为25fps
+            sessionId
         });
         // 获取现有的历史记录
         try {
@@ -620,5 +761,8 @@ Page({
         } catch (e) {
             log.error(e)
         }
+        this.track('page_view', {
+            page: 'index'
+        });
     }
 });
