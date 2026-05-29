@@ -1,0 +1,57 @@
+<view class="container">
+    <view class="title">拍摄清单</view>
+    <view class="subtitle">为下一次计划拍摄整理设备，按设备类型勾选和补充检查项。</view>
+
+    <view class="notice">{{storageNotice}}</view>
+
+    <view class="section">
+        <view class="section-title">计划事件</view>
+        <view class="form-row">
+            <view class="form-label">名称</view>
+            <input class="text-input" placeholder="例如：周末日落延时" value="{{eventName}}" bindinput="eventNameChange" />
+        </view>
+        <view class="form-row">
+            <view class="form-label">日期</view>
+            <picker mode="date" value="{{eventDate}}" bindchange="eventDateChange">
+                <view class="date-picker">{{eventDate || '选择日期'}}</view>
+            </picker>
+        </view>
+    </view>
+
+    <view class="section add-section">
+        <view class="section-title">新增检查项</view>
+        <view class="form-row">
+            <view class="form-label">分类</view>
+            <picker mode="selector" value="{{selectedCategoryIndex}}" range="{{categoryNames}}" bindchange="categoryChange">
+                <view class="date-picker">{{categoryNames[selectedCategoryIndex]}}</view>
+            </picker>
+        </view>
+        <view class="add-row">
+            <input class="add-input" placeholder="输入自定义设备或事项" value="{{newItemText}}" bindinput="newItemChange" confirm-type="done" bindconfirm="addItem" />
+            <button class="add-button" bindtap="addItem">添加</button>
+        </view>
+    </view>
+
+    <block wx:for="{{checklist}}" wx:key="type" wx:for-index="groupIndex">
+        <view class="section checklist-section">
+            <view class="section-title">{{item.type}}</view>
+            <view class="empty-list" wx:if="{{!item.items.length}}">暂无检查项，可在上方添加。</view>
+            <block wx:else>
+                <block wx:for="{{item.items}}" wx:key="text" wx:for-item="checkItem" wx:for-index="itemIndex">
+                    <view class="check-row">
+                        <view class="check-main" bindtap="toggleItem" data-group-index="{{groupIndex}}" data-item-index="{{itemIndex}}">
+                            <view class="checkbox {{checkItem.checked ? 'checkbox-checked' : ''}}">{{checkItem.checked ? '✓' : ''}}</view>
+                            <view class="check-text {{checkItem.checked ? 'check-text-done' : ''}}">{{checkItem.text}}</view>
+                        </view>
+                        <button class="delete-button" catchtap="deleteItem" data-group-index="{{groupIndex}}" data-item-index="{{itemIndex}}">删除</button>
+                    </view>
+                </block>
+            </block>
+        </view>
+    </block>
+
+    <view class="buttons">
+        <button class="reset-button" bindtap="resetChecklist">恢复默认</button>
+        <button class="clear-button" bindtap="clearChecklist">删除清单</button>
+    </view>
+</view>
