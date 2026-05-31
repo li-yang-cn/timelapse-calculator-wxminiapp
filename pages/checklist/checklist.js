@@ -124,6 +124,10 @@ function cloneChecklist(checklist) {
     return JSON.parse(JSON.stringify(checklist));
 }
 
+function isPlainObject(value) {
+    return value !== null && typeof value === 'object' && !Array.isArray(value);
+}
+
 function getPageTopPadding() {
     try {
         const windowInfo = typeof wx.getWindowInfo === 'function' ? wx.getWindowInfo() : wx.getSystemInfoSync();
@@ -140,13 +144,14 @@ function normalizeChecklist(checklist) {
     }
 
     return checklist.map((group, groupIndex) => {
+        const safeGroup = isPlainObject(group) ? group : {};
         const fallback = DEFAULT_CHECKLIST[groupIndex] || {
             type: '其他设备',
             items: []
         };
-        const items = Array.isArray(group.items) ? group.items : [];
+        const items = Array.isArray(safeGroup.items) ? safeGroup.items : [];
         return {
-            type: group.type || fallback.type,
+            type: safeGroup.type || fallback.type,
             items: items.filter((item) => {
                 return item && typeof item.text === 'string' && item.text.trim();
             }).map((item) => {
@@ -161,6 +166,18 @@ function normalizeChecklist(checklist) {
     });
 }
 
+function normalizeStoredData(stored) {
+    return isPlainObject(stored) ? stored : {};
+}
+
+function getSelectedCategoryName(categoryNames, selectedCategoryIndex) {
+    if (!Array.isArray(categoryNames) || categoryNames.length === 0) {
+        return '选择分类';
+    }
+
+    return categoryNames[selectedCategoryIndex] || categoryNames[0];
+}
+
 Page({
     data: {
         storageNotice: '隐私提醒：本小程序不收集个人信息，清单仅保存在微信本地缓存中。清理缓存、删除小程序或更换设备后，数据可能丢失。',
@@ -168,6 +185,7 @@ Page({
         eventDate: '',
         checklist: cloneChecklist(DEFAULT_CHECKLIST),
         categoryNames: DEFAULT_CHECKLIST.map((group) => group.type),
+        selectedCategoryName: DEFAULT_CHECKLIST[0].type,
         selectedCategoryIndex: 0,
         newItemText: '',
         pageTopPadding: 36
@@ -186,13 +204,17 @@ Page({
 
     loadChecklist() {
         try {
-            const stored = wx.getStorageSync(STORAGE_KEY) || {};
+            const stored = normalizeStoredData(wx.getStorageSync(STORAGE_KEY));
             const checklist = normalizeChecklist(stored.checklist);
+            const categoryNames = checklist.map((group) => group.type);
+            const selectedCategoryIndex = 0;
             this.setData({
                 eventName: stored.eventName || '',
                 eventDate: stored.eventDate || '',
                 checklist,
-                categoryNames: checklist.map((group) => group.type)
+                categoryNames,
+                selectedCategoryIndex,
+                selectedCategoryName: getSelectedCategoryName(categoryNames, selectedCategoryIndex)
             });
         } catch (e) {
             log.error(e);
@@ -232,8 +254,10 @@ Page({
     },
 
     categoryChange(e) {
+        const selectedCategoryIndex = Number(e.detail.value);
         this.setData({
-            selectedCategoryIndex: Number(e.detail.value)
+            selectedCategoryIndex,
+            selectedCategoryName: getSelectedCategoryName(this.data.categoryNames, selectedCategoryIndex)
         });
     },
 
@@ -254,8 +278,17 @@ Page({
         }
 
         const groupIndex = this.data.selectedCategoryIndex;
+        const group = this.data.checklist[groupIndex];
+        if (!group || !Array.isArray(group.items)) {
+            wx.showToast({
+                title: '请选择有效分类',
+                icon: 'none'
+            });
+            return;
+        }
+
         const path = `checklist[${groupIndex}].items`;
-        const items = this.data.checklist[groupIndex].items.concat({
+        const items = group.items.concat({
             text,
             checked: false
         });
@@ -318,10 +351,13 @@ Page({
                     return;
                 }
                 const checklist = cloneChecklist(DEFAULT_CHECKLIST);
+                const categoryNames = checklist.map((group) => group.type);
+                const selectedCategoryIndex = 0;
                 this.setData({
                     checklist,
-                    categoryNames: checklist.map((group) => group.type),
-                    selectedCategoryIndex: 0,
+                    categoryNames,
+                    selectedCategoryIndex,
+                    selectedCategoryName: getSelectedCategoryName(categoryNames, selectedCategoryIndex),
                     newItemText: ''
                 }, () => {
                     this.saveChecklist();
@@ -344,12 +380,16 @@ Page({
                 } catch (e) {
                     log.error(e);
                 }
+                const checklist = cloneChecklist(DEFAULT_CHECKLIST);
+                const categoryNames = checklist.map((group) => group.type);
+                const selectedCategoryIndex = 0;
                 this.setData({
                     eventName: '',
                     eventDate: '',
-                    checklist: cloneChecklist(DEFAULT_CHECKLIST),
-                    categoryNames: DEFAULT_CHECKLIST.map((group) => group.type),
-                    selectedCategoryIndex: 0,
+                    checklist,
+                    categoryNames,
+                    selectedCategoryIndex,
+                    selectedCategoryName: getSelectedCategoryName(categoryNames, selectedCategoryIndex),
                     newItemText: ''
                 });
             }

@@ -23,7 +23,7 @@
         <view class="form-row">
             <view class="form-label">分类</view>
             <picker mode="selector" value="{{selectedCategoryIndex}}" range="{{categoryNames}}" bindchange="categoryChange">
-                <view class="date-picker">{{categoryNames[selectedCategoryIndex]}}</view>
+                <view class="date-picker">{{selectedCategoryName}}</view>
             </picker>
         </view>
         <view class="add-row">
