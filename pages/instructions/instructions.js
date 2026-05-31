@@ -2,8 +2,8 @@ var log = require('../../utils/logs/logs')
 
 function getPageTopPadding() {
     try {
-        const systemInfo = wx.getSystemInfoSync();
-        const statusBarHeight = systemInfo.statusBarHeight || 0;
+        const windowInfo = typeof wx.getWindowInfo === 'function' ? wx.getWindowInfo() : wx.getSystemInfoSync();
+        const statusBarHeight = windowInfo.statusBarHeight || 0;
         return statusBarHeight + 18;
     } catch (e) {
         return 36;
