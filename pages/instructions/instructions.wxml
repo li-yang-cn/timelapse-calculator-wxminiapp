@@ -1,4 +1,4 @@
-<view class="container">
+<view class="container" style="padding-top: {{pageTopPadding}}px;">
     <view class="title">使用说明</view>
     <view class="subtitle">用于快速规划延时摄影的拍摄时长、成片时长、帧速率、拍摄间隔和总张数。</view>
 

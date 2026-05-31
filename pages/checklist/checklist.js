@@ -124,6 +124,16 @@ function cloneChecklist(checklist) {
     return JSON.parse(JSON.stringify(checklist));
 }
 
+function getPageTopPadding() {
+    try {
+        const systemInfo = wx.getSystemInfoSync();
+        const statusBarHeight = systemInfo.statusBarHeight || 0;
+        return statusBarHeight + 18;
+    } catch (e) {
+        return 36;
+    }
+}
+
 function normalizeChecklist(checklist) {
     if (!Array.isArray(checklist)) {
         return cloneChecklist(DEFAULT_CHECKLIST);
@@ -159,7 +169,8 @@ Page({
         checklist: cloneChecklist(DEFAULT_CHECKLIST),
         categoryNames: DEFAULT_CHECKLIST.map((group) => group.type),
         selectedCategoryIndex: 0,
-        newItemText: ''
+        newItemText: '',
+        pageTopPadding: 36
     },
 
     onReady() {
@@ -167,6 +178,9 @@ Page({
     },
 
     onLoad() {
+        this.setData({
+            pageTopPadding: getPageTopPadding()
+        });
         this.loadChecklist();
     },
 

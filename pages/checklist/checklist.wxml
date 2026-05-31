@@ -1,4 +1,4 @@
-<view class="container">
+<view class="container" style="padding-top: {{pageTopPadding}}px;">
     <view class="title">拍摄清单</view>
     <view class="subtitle">为下一次计划拍摄整理设备，按设备类型勾选和补充检查项。</view>
 
