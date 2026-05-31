@@ -1,6 +1,8 @@
 .container {
     min-height: 100vh;
     padding: 36rpx 32rpx 90rpx;
+    padding-top: calc(36rpx + constant(safe-area-inset-top));
+    padding-top: calc(36rpx + env(safe-area-inset-top));
     box-sizing: border-box;
 }
 
