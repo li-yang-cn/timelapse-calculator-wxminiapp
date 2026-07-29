@@ -393,7 +393,10 @@ test('calculate offers a resolution and applies it when accepted', () => {
   assert.equal(page._modalCalls.length, 1);
   assert.equal(page._modalCalls[0].confirmText, '接受');
   assert.equal(page._modalCalls[0].cancelText, '拒绝');
-  assert.match(page._modalCalls[0].content, /自动调整成片时长和总张数/);
+  assert.equal(
+    page._modalCalls[0].content,
+    '按拍摄参数成片约12秒\n\n建议：以拍摄时长和拍摄间隔为准，自动调整成片时长和总张数'
+  );
   assert.equal(events[0].event, 'calculate_conflict_prompt');
 
   page._modalCalls[0].success({ confirm: true, cancel: false });

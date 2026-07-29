@@ -155,7 +155,7 @@ Page({
         this.track('calculate_conflict_prompt', eventPayload);
         wx.showModal({
             title: '参数冲突',
-            content: `${failure.message}。建议${resolution.description}，是否接受？`,
+            content: `${failure.message}\n\n建议：${resolution.description}`,
             confirmText: '接受',
             cancelText: '拒绝',
             success: (res) => {
