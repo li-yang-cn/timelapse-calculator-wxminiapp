@@ -160,11 +160,12 @@ test('resolveCalculation rejects total frames that conflict with final duration'
 
   assert.deepEqual(result, {
     isValid: false,
-    message: '总张数与成片时长冲突'
+    code: 'total_frames_final_duration_conflict',
+    message: '按成片时长应为250张'
   });
 });
 
-test('resolveCalculation rejects total frames that conflict with duration and interval', () => {
+test('resolveCalculation accepts a one-frame rounding difference', () => {
   const page = loadIndexPage();
 
   const result = page.resolveCalculation({
@@ -176,8 +177,32 @@ test('resolveCalculation rejects total frames that conflict with duration and in
   });
 
   assert.deepEqual(result, {
+    isValid: true,
+    values: {
+      duration: 10,
+      finalDuration: 12.04,
+      frameRate: 25,
+      interval: 2,
+      totalFrames: 301
+    }
+  });
+});
+
+test('resolveCalculation rejects capture frame differences greater than rounding tolerance', () => {
+  const page = loadIndexPage();
+
+  const result = page.resolveCalculation({
+    duration: 10,
+    finalDuration: null,
+    frameRate: 25,
+    interval: 2,
+    totalFrames: 302
+  });
+
+  assert.deepEqual(result, {
     isValid: false,
-    message: '总张数与拍摄时长/间隔冲突'
+    code: 'total_frames_capture_conflict',
+    message: '按拍摄参数应为300张'
   });
 });
 
@@ -194,7 +219,8 @@ test('resolveCalculation rejects final duration that conflicts with capture sett
 
   assert.deepEqual(result, {
     isValid: false,
-    message: '成片时长与拍摄参数冲突'
+    code: 'final_duration_capture_conflict',
+    message: '按拍摄参数成片约12秒'
   });
 });
 
@@ -211,6 +237,7 @@ test('resolveCalculation rejects missing total frame inputs', () => {
 
   assert.deepEqual(result, {
     isValid: false,
+    code: 'insufficient_total_frames',
     message: '参数不足，无法计算总张数'
   });
 });
@@ -228,6 +255,7 @@ test('resolveCalculation rejects non-positive resolved total frames', () => {
 
   assert.deepEqual(result, {
     isValid: false,
+    code: 'insufficient_total_frames',
     message: '参数不足，无法计算总张数'
   });
 });
@@ -245,6 +273,7 @@ test('resolveCalculation rejects final duration and total frames without capture
 
   assert.deepEqual(result, {
     isValid: false,
+    code: 'missing_capture_parameter',
     message: '还需输入拍摄时长或间隔'
   });
 });
@@ -257,6 +286,7 @@ test('getParsedInputs validates frame rate before calculation', () => {
 
   assert.deepEqual(page.getParsedInputs(), {
     isValid: false,
+    code: 'invalid_frame_rate',
     message: '请选择有效帧速率'
   });
 });
@@ -268,6 +298,7 @@ test('getParsedInputs rejects non-positive numeric fields', () => {
 
   assert.deepEqual(page.getParsedInputs(), {
     isValid: false,
+    code: 'invalid_value',
     message: '拍摄时长必须大于0'
   });
 });
@@ -279,6 +310,7 @@ test('getParsedInputs rejects decimal total frames', () => {
 
   assert.deepEqual(page.getParsedInputs(), {
     isValid: false,
+    code: 'invalid_total_frames',
     message: '总张数必须是整数'
   });
 });
@@ -307,6 +339,28 @@ test('calculate stores formatted results and marks calculated fields for manual 
   assert.deepEqual(page.data.history[0].calculatedFields, page.data.calculatedFields);
 });
 
+test('preset calculation emits one consolidated success event', () => {
+  const page = loadIndexPage();
+  const events = [];
+  page.track = (event, payload) => {
+    events.push({ event, payload });
+  };
+
+  page.applyPreset({
+    currentTarget: {
+      dataset: {
+        index: 2
+      }
+    }
+  });
+
+  assert.equal(events.length, 1);
+  assert.equal(events[0].event, 'calculate_success');
+  assert.equal(events[0].payload.source, 'preset');
+  assert.equal(events[0].payload.presetName, '星空');
+  assert.deepEqual(events[0].payload.riskWarningTypes, ['long_duration']);
+});
+
 test('calculate reports resolveCalculation conflicts from valid parsed inputs', () => {
   const page = loadIndexPage();
   page.data.duration = '10';
@@ -318,7 +372,7 @@ test('calculate reports resolveCalculation conflicts from valid parsed inputs', 
   assert.equal(page.data.isCalculated, false);
   assert.equal(page.data.showResetButton, true);
   assert.deepEqual(page._toastCalls.at(-1), {
-    title: '成片时长与拍摄参数冲突',
+    title: '按拍摄参数成片约12秒',
     icon: 'none'
   });
 });

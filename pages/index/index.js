@@ -1,6 +1,7 @@
 var log = require('../../utils/logs/logs')
 
 const APP_VERSION = '1.1.0';
+const FRAME_CONSISTENCY_TOLERANCE = 1;
 
 Page({
     data: {
@@ -89,10 +90,6 @@ Page({
         isCalculated: false, // 是否已经计算
         showResetButton: false // 是否显示重置按钮
     },
-    onReady() {
-        log.info(`[TIME]Index page is Ready`);
-    },
-
     track(event, payload) {
         log.info('[EVENT]', JSON.stringify({
             event,
@@ -122,6 +119,23 @@ Page({
                 showResetButton: true
             });
         }
+    },
+
+    reportCalculationFailure(failure, options) {
+        const settings = options || {};
+        wx.showToast({
+            title: failure.message,
+            icon: 'none'
+        });
+        if (settings.source === 'manual') {
+            this.showResetForFailedCalculation();
+        }
+        this.track('calculate_failed', Object.assign({
+            source: settings.source,
+            reason: failure.code || 'validation_failed',
+            message: failure.message,
+            providedFields: settings.providedFields || []
+        }, settings.context || {}));
     },
 
     getCalculatedFieldNames(calculatedFields) {
@@ -181,17 +195,13 @@ Page({
             providedFields
         });
         if (!result.isValid) {
-            wx.showToast({
-                title: result.message,
-                icon: 'none'
-            });
-            log.error(`[ERROR] ${result.message}`);
-            this.track('calculate_failed', {
+            this.reportCalculationFailure(result, {
                 source: 'preset',
-                presetName: preset.name,
-                presetIndex: index,
-                reason: result.message,
-                providedFields
+                providedFields,
+                context: {
+                    presetName: preset.name,
+                    presetIndex: index
+                }
             });
             return;
         }
@@ -226,23 +236,16 @@ Page({
             showResetButton: true
         });
         this.resetUserInputs();
-        this.track('preset_select', {
-            presetName: preset.name,
-            presetIndex: index,
-            duration,
-            finalDuration,
-            frameRate,
-            interval,
-            totalFrames
-        });
-        this.track('calculate_success', this.getCalculationPayload({
+        const calculationPayload = this.getCalculationPayload({
             source: 'preset',
             result: result.values,
             providedFields,
             calculatedFields,
             riskWarnings
-        }));
-        this.trackRiskWarnings(result.values);
+        });
+        calculationPayload.presetName = preset.name;
+        calculationPayload.presetIndex = index;
+        this.track('calculate_success', calculationPayload);
 
         wx.showToast({
             title: `已生成${preset.name}`,
@@ -253,15 +256,8 @@ Page({
     calculate() {
         const parsed = this.getParsedInputs();
         if (!parsed.isValid) {
-            wx.showToast({
-                title: parsed.message,
-                icon: 'none'
-            });
-            log.error(`[ERROR] ${parsed.message}`);
-            this.showResetForFailedCalculation();
-            this.track('calculate_failed', {
+            this.reportCalculationFailure(parsed, {
                 source: 'manual',
-                reason: parsed.message,
                 providedFields: this.getCurrentProvidedFields()
             });
             return;
@@ -269,15 +265,8 @@ Page({
 
         const result = this.resolveCalculation(parsed.values);
         if (!result.isValid) {
-            wx.showToast({
-                title: result.message,
-                icon: 'none'
-            });
-            log.error(`[ERROR] ${result.message}`);
-            this.showResetForFailedCalculation();
-            this.track('calculate_failed', {
+            this.reportCalculationFailure(result, {
                 source: 'manual',
-                reason: result.message,
                 providedFields: parsed.values.providedFields
             });
             return;
@@ -296,12 +285,6 @@ Page({
         });
         const riskWarnings = this.getRiskWarnings(result.values);
         this.storeCalculationResult(resultRecord);
-        log.info(`[CALC]
-            Duration: ${duration},
-            FinalDuration: ${finalDuration},
-            FrameRate: ${frameRate},
-            Interval: ${interval},
-            TotalFrames: ${totalFrames}`);
         this.setData({
             duration: duration.toFixed(2),
             finalDuration: finalDuration.toFixed(2),
@@ -322,7 +305,6 @@ Page({
             calculatedFields,
             riskWarnings
         }));
-        this.trackRiskWarnings(result.values);
     },
 
     getEditPatch(editedField) {
@@ -398,6 +380,7 @@ Page({
         if (!Number.isFinite(values.frameRate) || values.frameRate <= 0) {
             return {
                 isValid: false,
+                code: 'invalid_frame_rate',
                 message: '请选择有效帧速率'
             };
         }
@@ -414,12 +397,14 @@ Page({
             if (!Number.isFinite(value) || value <= 0) {
                 return {
                     isValid: false,
+                    code: 'invalid_value',
                     message: `${rules[field].label}必须大于0`
                 };
             }
             if (rules[field].integer && !Number.isInteger(value)) {
                 return {
                     isValid: false,
+                    code: 'invalid_total_frames',
                     message: `${rules[field].label}必须是整数`
                 };
             }
@@ -431,6 +416,7 @@ Page({
         if (providedFields.length < 2) {
             return {
                 isValid: false,
+                code: 'insufficient_parameters',
                 message: '至少输入两个参数'
             };
         }
@@ -448,23 +434,30 @@ Page({
         const captureTotalFrames = values.duration !== null && values.interval !== null ?
             Math.round((values.duration * 60) / values.interval) : null;
         let totalFrames = values.totalFrames;
+        const framesMatch = (left, right) => {
+            return Math.abs(left - right) <= FRAME_CONSISTENCY_TOLERANCE;
+        };
 
-        if (totalFrames !== null && fpsTotalFrames !== null && totalFrames !== fpsTotalFrames) {
+        if (totalFrames !== null && fpsTotalFrames !== null && !framesMatch(totalFrames, fpsTotalFrames)) {
             return {
                 isValid: false,
-                message: '总张数与成片时长冲突'
+                code: 'total_frames_final_duration_conflict',
+                message: `按成片时长应为${fpsTotalFrames}张`
             };
         }
-        if (totalFrames !== null && captureTotalFrames !== null && totalFrames !== captureTotalFrames) {
+        if (totalFrames !== null && captureTotalFrames !== null && !framesMatch(totalFrames, captureTotalFrames)) {
             return {
                 isValid: false,
-                message: '总张数与拍摄时长/间隔冲突'
+                code: 'total_frames_capture_conflict',
+                message: `按拍摄参数应为${captureTotalFrames}张`
             };
         }
-        if (fpsTotalFrames !== null && captureTotalFrames !== null && fpsTotalFrames !== captureTotalFrames) {
+        if (fpsTotalFrames !== null && captureTotalFrames !== null && !framesMatch(fpsTotalFrames, captureTotalFrames)) {
+            const expectedFinalDuration = Number((captureTotalFrames / values.frameRate).toFixed(2));
             return {
                 isValid: false,
-                message: '成片时长与拍摄参数冲突'
+                code: 'final_duration_capture_conflict',
+                message: `按拍摄参数成片约${expectedFinalDuration}秒`
             };
         }
 
@@ -474,6 +467,7 @@ Page({
         if (totalFrames === null || totalFrames <= 0) {
             return {
                 isValid: false,
+                code: 'insufficient_total_frames',
                 message: '参数不足，无法计算总张数'
             };
         }
@@ -493,6 +487,7 @@ Page({
         } else if (duration === null && interval === null) {
             return {
                 isValid: false,
+                code: 'missing_capture_parameter',
                 message: '还需输入拍摄时长或间隔'
             };
         }
@@ -540,18 +535,6 @@ Page({
         }).filter((message) => {
             return !!message;
         });
-    },
-
-    trackRiskWarnings(result) {
-        const warningTypes = this.getRiskWarningTypes(result);
-        if (warningTypes.length > 0) {
-            this.track('risk_warning_show', {
-                warningTypes,
-                duration: result.duration,
-                interval: result.interval,
-                totalFrames: result.totalFrames
-            });
-        }
     },
 
     storeCalculationResult(result) {
@@ -603,7 +586,6 @@ Page({
     },
 
     reset() {
-        log.info("[REST]");
         this.setData({
             duration: '',
             finalDuration: '',
