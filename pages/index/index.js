@@ -1,6 +1,6 @@
 var log = require('../../utils/logs/logs')
 
-const APP_VERSION = '1.1.0';
+const APP_VERSION = '1.2.0';
 const FRAME_CONSISTENCY_TOLERANCE = 1;
 
 Page({
@@ -70,6 +70,7 @@ Page({
         selectedPresetIndex: null,
         selectedPreset: null,
         history: [],
+        historyIsEmpty: true,
         historyExpanded: false,
         lastResult: null,
         riskWarnings: [],
@@ -635,7 +636,8 @@ Page({
         };
         // 更新页面的数据
         this.setData({
-            history
+            history,
+            historyIsEmpty: history.length === 0
         });
     },
 
@@ -713,7 +715,8 @@ Page({
                     log.error(e)
                 }
                 this.setData({
-                    history: []
+                    history: [],
+                    historyIsEmpty: true
                 });
                 this.track('history_clear', {
                     historyCount
@@ -725,7 +728,8 @@ Page({
 
     loadHistory(e) {
         const index = e.currentTarget.dataset.index;
-        const item = this.data.history[index];
+        const history = Array.isArray(this.data.history) ? this.data.history : [];
+        const item = history[index];
         if (!item) {
             return;
         }
@@ -765,11 +769,13 @@ Page({
 
     toggleHistory() {
         const nextExpanded = !this.data.historyExpanded;
+        const history = Array.isArray(this.data.history) ? this.data.history : [];
         this.setData({
-            historyExpanded: nextExpanded
+            historyExpanded: nextExpanded,
+            historyIsEmpty: history.length === 0
         });
         this.track(nextExpanded ? 'history_expand' : 'history_collapse', {
-            historyCount: this.data.history.length
+            historyCount: history.length
         });
     },
 
@@ -784,7 +790,8 @@ Page({
 
     copyResult(e) {
         const index = e && e.currentTarget && e.currentTarget.dataset ? e.currentTarget.dataset.index : undefined;
-        const result = index !== undefined ? this.data.history[index] : this.data.lastResult;
+        const history = Array.isArray(this.data.history) ? this.data.history : [];
+        const result = index !== undefined ? history[index] : this.data.lastResult;
         if (!result) {
             wx.showToast({
                 title: '暂无可复制结果',
@@ -814,21 +821,21 @@ Page({
 
     onLoad() {
         const sessionId = this.createSessionId();
-        this.setData({
-            frameRate: this.data.frameRates[1], // 默认设置为25fps
-            sessionId
-        });
+        let history = [];
         // 获取现有的历史记录
         try {
-            let history = wx.getStorageSync('calculationHistory') || [];
+            history = wx.getStorageSync('calculationHistory') || [];
             history = this.normalizeHistory(history);
             wx.setStorageSync('calculationHistory', history);
-            this.setData({
-                history
-            })
         } catch (e) {
             log.error(e)
         }
+        this.setData({
+            frameRate: this.data.frameRates[1], // 默认设置为25fps
+            sessionId,
+            history,
+            historyIsEmpty: history.length === 0
+        });
         this.track('page_view', {
             page: 'index'
         });

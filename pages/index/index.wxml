@@ -73,7 +73,7 @@
         <text class="history-toggle">{{historyExpanded ? '收起' : '展开'}}</text>
     </view>
     <block wx:if="{{historyExpanded}}">
-        <view class="empty-history" wx:if="{{!history.length}}">暂无历史记录</view>
+        <view class="empty-history" wx:if="{{historyIsEmpty}}">暂无历史记录</view>
         <block wx:else>
             <view class="table-header">
                 <view class="table-cell">拍摄时长</view>

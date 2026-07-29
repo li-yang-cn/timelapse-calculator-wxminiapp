@@ -95,7 +95,8 @@ test('checklist page normalizes invalid groups and item arrays from storage', ()
   assert.deepEqual(page.data.checklist[0].items, []);
   assert.deepEqual(page.data.checklist[1], {
     type: '自定义',
-    items: []
+    items: [],
+    isEmpty: true
   });
   assert.deepEqual(page.data.checklist[2], {
     type: '有效分类',
@@ -104,6 +105,7 @@ test('checklist page normalizes invalid groups and item arrays from storage', ()
         text: '带三脚架',
         checked: true
       }
-    ]
+    ],
+    isEmpty: false
   });
 });

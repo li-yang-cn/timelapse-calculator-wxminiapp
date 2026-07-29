@@ -162,7 +162,11 @@ function normalizeChecklist(checklist) {
             })
         };
     }).filter((group) => {
-        return group.type && group.items;
+        return group.type && Array.isArray(group.items);
+    }).map((group) => {
+        return Object.assign({}, group, {
+            isEmpty: group.items.length === 0
+        });
     });
 }
 
@@ -176,6 +180,15 @@ function getSelectedCategoryName(categoryNames, selectedCategoryIndex) {
     }
 
     return categoryNames[selectedCategoryIndex] || categoryNames[0];
+}
+
+function serializeChecklist(checklist) {
+    return normalizeChecklist(checklist).map((group) => {
+        return {
+            type: group.type,
+            items: group.items
+        };
+    });
 }
 
 Page({
@@ -196,9 +209,6 @@ Page({
     },
 
     onLoad() {
-        this.setData({
-            pageTopPadding: getPageTopPadding()
-        });
         this.loadChecklist();
     },
 
@@ -214,7 +224,8 @@ Page({
                 checklist,
                 categoryNames,
                 selectedCategoryIndex,
-                selectedCategoryName: getSelectedCategoryName(categoryNames, selectedCategoryIndex)
+                selectedCategoryName: getSelectedCategoryName(categoryNames, selectedCategoryIndex),
+                pageTopPadding: getPageTopPadding()
             });
         } catch (e) {
             log.error(e);
@@ -226,7 +237,7 @@ Page({
             wx.setStorageSync(STORAGE_KEY, {
                 eventName: this.data.eventName,
                 eventDate: this.data.eventDate,
-                checklist: this.data.checklist
+                checklist: serializeChecklist(this.data.checklist)
             });
         } catch (e) {
             log.error(e);
@@ -287,13 +298,17 @@ Page({
             return;
         }
 
-        const path = `checklist[${groupIndex}].items`;
         const items = group.items.concat({
             text,
             checked: false
         });
+        const checklist = this.data.checklist.slice();
+        checklist[groupIndex] = Object.assign({}, group, {
+            items,
+            isEmpty: items.length === 0
+        });
         this.setData({
-            [path]: items,
+            checklist,
             newItemText: ''
         }, () => {
             this.saveChecklist();
@@ -303,13 +318,23 @@ Page({
     toggleItem(e) {
         const groupIndex = Number(e.currentTarget.dataset.groupIndex);
         const itemIndex = Number(e.currentTarget.dataset.itemIndex);
-        const item = this.data.checklist[groupIndex] && this.data.checklist[groupIndex].items[itemIndex];
+        const group = this.data.checklist[groupIndex];
+        const item = group && Array.isArray(group.items) && group.items[itemIndex];
         if (!item) {
             return;
         }
 
+        const checklist = this.data.checklist.slice();
+        const items = group.items.slice();
+        items[itemIndex] = Object.assign({}, item, {
+            checked: !item.checked
+        });
+        checklist[groupIndex] = Object.assign({}, group, {
+            items,
+            isEmpty: items.length === 0
+        });
         this.setData({
-            [`checklist[${groupIndex}].items[${itemIndex}].checked`]: !item.checked
+            checklist
         }, () => {
             this.saveChecklist();
         });
@@ -319,7 +344,7 @@ Page({
         const groupIndex = Number(e.currentTarget.dataset.groupIndex);
         const itemIndex = Number(e.currentTarget.dataset.itemIndex);
         const group = this.data.checklist[groupIndex];
-        if (!group || !group.items[itemIndex]) {
+        if (!group || !Array.isArray(group.items) || !group.items[itemIndex]) {
             return;
         }
 
@@ -332,8 +357,13 @@ Page({
                     return;
                 }
                 const items = group.items.filter((item, index) => index !== itemIndex);
+                const checklist = this.data.checklist.slice();
+                checklist[groupIndex] = Object.assign({}, group, {
+                    items,
+                    isEmpty: items.length === 0
+                });
                 this.setData({
-                    [`checklist[${groupIndex}].items`]: items
+                    checklist
                 }, () => {
                     this.saveChecklist();
                 });

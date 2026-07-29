@@ -12,7 +12,7 @@
         </view>
         <view class="form-row">
             <view class="form-label">日期</view>
-            <picker mode="date" value="{{eventDate}}" bindchange="eventDateChange">
+            <picker class="field-picker" mode="date" value="{{eventDate}}" bindchange="eventDateChange">
                 <view class="date-picker">{{eventDate || '选择日期'}}</view>
             </picker>
         </view>
@@ -22,7 +22,7 @@
         <view class="section-title">新增检查项</view>
         <view class="form-row">
             <view class="form-label">分类</view>
-            <picker mode="selector" value="{{selectedCategoryIndex}}" range="{{categoryNames}}" bindchange="categoryChange">
+            <picker class="field-picker" mode="selector" value="{{selectedCategoryIndex}}" range="{{categoryNames}}" bindchange="categoryChange">
                 <view class="date-picker">{{selectedCategoryName}}</view>
             </picker>
         </view>
@@ -35,7 +35,7 @@
     <block wx:for="{{checklist}}" wx:key="type" wx:for-index="groupIndex">
         <view class="section checklist-section">
             <view class="section-title">{{item.type}}</view>
-            <view class="empty-list" wx:if="{{!item.items.length}}">暂无检查项，可在上方添加。</view>
+            <view class="empty-list" wx:if="{{item.isEmpty}}">暂无检查项，可在上方添加。</view>
             <block wx:else>
                 <block wx:for="{{item.items}}" wx:key="text" wx:for-item="checkItem" wx:for-index="itemIndex">
                     <view class="check-row">
