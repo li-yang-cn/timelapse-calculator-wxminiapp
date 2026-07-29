@@ -12,6 +12,7 @@ function loadIndexPage() {
   let pageConfig;
   const storage = {};
   const toastCalls = [];
+  const modalCalls = [];
 
   global.wx = {
     getRealtimeLogManager: () => null,
@@ -25,7 +26,9 @@ function loadIndexPage() {
     showToast: (options) => {
       toastCalls.push(options);
     },
-    showModal: () => {},
+    showModal: (options) => {
+      modalCalls.push(options);
+    },
     setClipboardData: () => {}
   };
   global.Page = (config) => {
@@ -36,7 +39,7 @@ function loadIndexPage() {
 
   const page = Object.assign({}, pageConfig, {
     data: JSON.parse(JSON.stringify(pageConfig.data)),
-    setData(patch) {
+    setData(patch, callback) {
       Object.keys(patch).forEach((key) => {
         const pathParts = key.split('.');
         let target = this.data;
@@ -47,8 +50,12 @@ function loadIndexPage() {
         }
         target[pathParts[pathParts.length - 1]] = patch[key];
       });
+      if (callback) {
+        callback();
+      }
     },
     _toastCalls: toastCalls,
+    _modalCalls: modalCalls,
     _storage: storage
   });
 
@@ -161,7 +168,8 @@ test('resolveCalculation rejects total frames that conflict with final duration'
   assert.deepEqual(result, {
     isValid: false,
     code: 'total_frames_final_duration_conflict',
-    message: '按成片时长应为250张'
+    message: '按成片时长应为250张',
+    resolution: null
   });
 });
 
@@ -202,7 +210,11 @@ test('resolveCalculation rejects capture frame differences greater than rounding
   assert.deepEqual(result, {
     isValid: false,
     code: 'total_frames_capture_conflict',
-    message: '按拍摄参数应为300张'
+    message: '按拍摄参数应为300张',
+    resolution: {
+      basisFields: ['duration', 'interval'],
+      description: '以拍摄时长和拍摄间隔为准，自动调整成片时长和总张数'
+    }
   });
 });
 
@@ -220,7 +232,11 @@ test('resolveCalculation rejects final duration that conflicts with capture sett
   assert.deepEqual(result, {
     isValid: false,
     code: 'final_duration_capture_conflict',
-    message: '按拍摄参数成片约12秒'
+    message: '按拍摄参数成片约12秒',
+    resolution: {
+      basisFields: ['duration', 'interval'],
+      description: '以拍摄时长和拍摄间隔为准，自动调整成片时长和总张数'
+    }
   });
 });
 
@@ -361,8 +377,12 @@ test('preset calculation emits one consolidated success event', () => {
   assert.deepEqual(events[0].payload.riskWarningTypes, ['long_duration']);
 });
 
-test('calculate reports resolveCalculation conflicts from valid parsed inputs', () => {
+test('calculate offers a resolution and applies it when accepted', () => {
   const page = loadIndexPage();
+  const events = [];
+  page.track = (event, payload) => {
+    events.push({ event, payload });
+  };
   page.data.duration = '10';
   page.data.finalDuration = '10';
   page.data.interval = '2';
@@ -370,11 +390,49 @@ test('calculate reports resolveCalculation conflicts from valid parsed inputs', 
   page.calculate();
 
   assert.equal(page.data.isCalculated, false);
+  assert.equal(page._modalCalls.length, 1);
+  assert.equal(page._modalCalls[0].confirmText, '接受');
+  assert.equal(page._modalCalls[0].cancelText, '拒绝');
+  assert.match(page._modalCalls[0].content, /自动调整成片时长和总张数/);
+  assert.equal(events[0].event, 'calculate_conflict_prompt');
+
+  page._modalCalls[0].success({ confirm: true, cancel: false });
+
+  assert.equal(page.data.isCalculated, true);
+  assert.equal(page.data.duration, '10.00');
+  assert.equal(page.data.finalDuration, '12.00');
+  assert.equal(page.data.interval, '2.00');
+  assert.equal(page.data.totalFrames, 300);
+  assert.deepEqual(events.map((item) => item.event), [
+    'calculate_conflict_prompt',
+    'calculate_conflict_resolution',
+    'calculate_success'
+  ]);
+  assert.equal(events[1].payload.action, 'accept');
+});
+
+test('calculate preserves conflicting input when resolution is rejected', () => {
+  const page = loadIndexPage();
+  const events = [];
+  page.track = (event, payload) => {
+    events.push({ event, payload });
+  };
+  page.data.duration = '10';
+  page.data.finalDuration = '10';
+  page.data.interval = '2';
+
+  page.calculate();
+  page._modalCalls[0].success({ confirm: false, cancel: true });
+
+  assert.equal(page.data.duration, '10');
+  assert.equal(page.data.finalDuration, '10');
+  assert.equal(page.data.interval, '2');
   assert.equal(page.data.showResetButton, true);
-  assert.deepEqual(page._toastCalls.at(-1), {
-    title: '按拍摄参数成片约12秒',
-    icon: 'none'
-  });
+  assert.deepEqual(events.map((item) => item.event), [
+    'calculate_conflict_prompt',
+    'calculate_conflict_resolution'
+  ]);
+  assert.equal(events[1].payload.action, 'reject');
 });
 
 test('calculate shows a reset affordance when validation fails after partial input', () => {

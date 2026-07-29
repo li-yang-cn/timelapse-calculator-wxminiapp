@@ -123,6 +123,10 @@ Page({
 
     reportCalculationFailure(failure, options) {
         const settings = options || {};
+        if (failure.resolution) {
+            this.offerConflictResolution(failure, settings);
+            return;
+        }
         wx.showToast({
             title: failure.message,
             icon: 'none'
@@ -136,6 +140,62 @@ Page({
             message: failure.message,
             providedFields: settings.providedFields || []
         }, settings.context || {}));
+    },
+
+    offerConflictResolution(failure, settings) {
+        const resolution = failure.resolution;
+        const eventPayload = Object.assign({
+            source: settings.source,
+            reason: failure.code,
+            message: failure.message,
+            providedFields: settings.providedFields || [],
+            basisFields: resolution.basisFields,
+            suggestion: resolution.description
+        }, settings.context || {});
+        this.track('calculate_conflict_prompt', eventPayload);
+        wx.showModal({
+            title: '参数冲突',
+            content: `${failure.message}。建议${resolution.description}，是否接受？`,
+            confirmText: '接受',
+            cancelText: '拒绝',
+            success: (res) => {
+                const action = res.confirm ? 'accept' : 'reject';
+                this.track('calculate_conflict_resolution', Object.assign({}, eventPayload, {
+                    action
+                }));
+                if (res.confirm) {
+                    this.applyConflictResolution(resolution);
+                } else {
+                    this.showResetForFailedCalculation();
+                }
+            }
+        });
+    },
+
+    applyConflictResolution(resolution) {
+        const fields = ['duration', 'finalDuration', 'interval', 'totalFrames'];
+        const patch = {
+            selectedPresetIndex: null,
+            selectedPreset: null,
+            lastResult: null,
+            riskWarnings: [],
+            calculatedFields: {
+                duration: false,
+                finalDuration: false,
+                interval: false,
+                totalFrames: false
+            },
+            isCalculated: false,
+            showResetButton: true
+        };
+        fields.forEach((field) => {
+            if (resolution.basisFields.indexOf(field) === -1) {
+                patch[field] = '';
+            }
+        });
+        this.setData(patch, () => {
+            this.calculate();
+        });
     },
 
     getCalculatedFieldNames(calculatedFields) {
@@ -439,17 +499,29 @@ Page({
         };
 
         if (totalFrames !== null && fpsTotalFrames !== null && !framesMatch(totalFrames, fpsTotalFrames)) {
+            const resolution = values.duration !== null ? {
+                basisFields: ['duration', 'finalDuration'],
+                description: '以拍摄时长和成片时长为准，自动调整间隔和总张数'
+            } : values.interval !== null ? {
+                basisFields: ['finalDuration', 'interval'],
+                description: '以成片时长和拍摄间隔为准，自动调整拍摄时长和总张数'
+            } : null;
             return {
                 isValid: false,
                 code: 'total_frames_final_duration_conflict',
-                message: `按成片时长应为${fpsTotalFrames}张`
+                message: `按成片时长应为${fpsTotalFrames}张`,
+                resolution
             };
         }
         if (totalFrames !== null && captureTotalFrames !== null && !framesMatch(totalFrames, captureTotalFrames)) {
             return {
                 isValid: false,
                 code: 'total_frames_capture_conflict',
-                message: `按拍摄参数应为${captureTotalFrames}张`
+                message: `按拍摄参数应为${captureTotalFrames}张`,
+                resolution: {
+                    basisFields: ['duration', 'interval'],
+                    description: '以拍摄时长和拍摄间隔为准，自动调整成片时长和总张数'
+                }
             };
         }
         if (fpsTotalFrames !== null && captureTotalFrames !== null && !framesMatch(fpsTotalFrames, captureTotalFrames)) {
@@ -457,7 +529,11 @@ Page({
             return {
                 isValid: false,
                 code: 'final_duration_capture_conflict',
-                message: `按拍摄参数成片约${expectedFinalDuration}秒`
+                message: `按拍摄参数成片约${expectedFinalDuration}秒`,
+                resolution: {
+                    basisFields: ['duration', 'interval'],
+                    description: '以拍摄时长和拍摄间隔为准，自动调整成片时长和总张数'
+                }
             };
         }
 
