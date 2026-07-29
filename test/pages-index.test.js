@@ -13,6 +13,8 @@ function loadIndexPage() {
   const storage = {};
   const toastCalls = [];
   const modalCalls = [];
+  const actionSheetCalls = [];
+  const shareImageCalls = [];
 
   global.wx = {
     getRealtimeLogManager: () => null,
@@ -28,6 +30,12 @@ function loadIndexPage() {
     },
     showModal: (options) => {
       modalCalls.push(options);
+    },
+    showActionSheet: (options) => {
+      actionSheetCalls.push(options);
+    },
+    showShareImageMenu: (options) => {
+      shareImageCalls.push(options);
     },
     setClipboardData: () => {}
   };
@@ -56,6 +64,8 @@ function loadIndexPage() {
     },
     _toastCalls: toastCalls,
     _modalCalls: modalCalls,
+    _actionSheetCalls: actionSheetCalls,
+    _shareImageCalls: shareImageCalls,
     _storage: storage
   });
 
@@ -436,6 +446,58 @@ test('calculate preserves conflicting input when resolution is rejected', () => 
     'calculate_conflict_resolution'
   ]);
   assert.equal(events[1].payload.action, 'reject');
+});
+
+test('share poster model contains calculation values and risk reminder', () => {
+  const page = loadIndexPage();
+
+  const poster = page.getSharePosterModel({
+    duration: 180,
+    finalDuration: 12,
+    frameRate: 25,
+    interval: 36,
+    totalFrames: 300
+  });
+
+  assert.equal(poster.title, '延时摄影拍摄方案');
+  assert.deepEqual(poster.rows.map((row) => row.value), [
+    '180 分钟',
+    '12 秒',
+    '25 fps',
+    '36 秒',
+    '300 张'
+  ]);
+  assert.match(poster.reminder, /拍摄时长较长/);
+});
+
+test('generated share image offers share save and preview actions', async () => {
+  const page = loadIndexPage();
+  const events = [];
+  page.data.lastResult = {
+    duration: 60,
+    finalDuration: 12,
+    frameRate: 25,
+    interval: 12,
+    totalFrames: 300
+  };
+  page.generateShareImage = () => Promise.resolve('/tmp/share-poster.png');
+  page.track = (event, payload) => {
+    events.push({ event, payload });
+  };
+
+  const filePath = await page.openShareImageActions();
+
+  assert.equal(filePath, '/tmp/share-poster.png');
+  assert.equal(page.data.shareImageGenerating, false);
+  assert.deepEqual(page._actionSheetCalls[0].itemList, [
+    '分享给好友',
+    '保存到相册',
+    '预览图片'
+  ]);
+  assert.equal(events[0].event, 'share_image_generated');
+
+  page._actionSheetCalls[0].success({ tapIndex: 0 });
+  assert.equal(page._shareImageCalls[0].path, '/tmp/share-poster.png');
 });
 
 test('calculate shows a reset affordance when validation fails after partial input', () => {

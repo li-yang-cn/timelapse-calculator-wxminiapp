@@ -73,6 +73,7 @@ Page({
         historyIsEmpty: true,
         historyExpanded: false,
         lastResult: null,
+        shareImageGenerating: false,
         riskWarnings: [],
         sessionId: '',
         calculatedFields: {
@@ -817,6 +818,319 @@ Page({
 
     formatResult(result) {
         return `延时摄影方案：拍摄时长 ${result.duration} 分钟，成片时长 ${result.finalDuration} 秒，帧速率 ${result.frameRate} fps，拍摄间隔 ${result.interval} 秒，总张数 ${result.totalFrames} 张。`;
+    },
+
+    getSharePosterModel(result) {
+        return {
+            title: '延时摄影拍摄方案',
+            rows: [{
+                    label: '拍摄时长',
+                    value: `${result.duration} 分钟`
+                },
+                {
+                    label: '成片时长',
+                    value: `${result.finalDuration} 秒`
+                },
+                {
+                    label: '帧速率',
+                    value: `${result.frameRate} fps`
+                },
+                {
+                    label: '拍摄间隔',
+                    value: `${result.interval} 秒`
+                },
+                {
+                    label: '总张数',
+                    value: `${result.totalFrames} 张`
+                }
+            ],
+            reminder: this.getRiskWarnings(result)[0] || '拍摄前请确认电量、存储空间和设备稳定性'
+        };
+    },
+
+    openShareImageActions() {
+        const result = this.data.lastResult;
+        if (!result || this.data.shareImageGenerating) {
+            return Promise.resolve();
+        }
+        this.setData({
+            shareImageGenerating: true
+        });
+        return this.generateShareImage(result).then((filePath) => {
+            this.setData({
+                shareImageGenerating: false
+            });
+            this.track('share_image_generated', {
+                hasRiskWarnings: this.getRiskWarningTypes(result).length > 0
+            });
+            this.showShareImageActions(filePath);
+            return filePath;
+        }).catch((error) => {
+            this.setData({
+                shareImageGenerating: false
+            });
+            this.track('share_image_failed', {
+                stage: 'generate',
+                message: error && error.message ? error.message : String(error)
+            });
+            wx.showToast({
+                title: '分享图生成失败',
+                icon: 'none'
+            });
+        });
+    },
+
+    showShareImageActions(filePath) {
+        wx.showActionSheet({
+            itemList: ['分享给好友', '保存到相册', '预览图片'],
+            success: (res) => {
+                if (res.tapIndex === 0) {
+                    this.shareGeneratedImage(filePath);
+                } else if (res.tapIndex === 1) {
+                    this.saveGeneratedImage(filePath);
+                } else if (res.tapIndex === 2) {
+                    this.previewGeneratedImage(filePath);
+                }
+            }
+        });
+    },
+
+    shareGeneratedImage(filePath) {
+        if (typeof wx.showShareImageMenu !== 'function') {
+            this.previewGeneratedImage(filePath);
+            wx.showToast({
+                title: '请长按图片分享',
+                icon: 'none'
+            });
+            return;
+        }
+        wx.showShareImageMenu({
+            path: filePath,
+            success: () => {
+                this.track('share_image_action', {
+                    action: 'share',
+                    result: 'success'
+                });
+            },
+            fail: (error) => {
+                if (!this.isUserCancelled(error)) {
+                    this.track('share_image_action', {
+                        action: 'share',
+                        result: 'failed'
+                    });
+                    this.previewGeneratedImage(filePath);
+                    wx.showToast({
+                        title: '请长按图片分享',
+                        icon: 'none'
+                    });
+                }
+            }
+        });
+    },
+
+    saveGeneratedImage(filePath) {
+        wx.saveImageToPhotosAlbum({
+            filePath,
+            success: () => {
+                this.track('share_image_action', {
+                    action: 'save',
+                    result: 'success'
+                });
+                wx.showToast({
+                    title: '已保存到相册',
+                    icon: 'success'
+                });
+            },
+            fail: (error) => {
+                if (this.isUserCancelled(error)) {
+                    return;
+                }
+                this.track('share_image_action', {
+                    action: 'save',
+                    result: 'failed'
+                });
+                if (error && /auth|authorize|permission|deny/i.test(error.errMsg || '')) {
+                    this.showAlbumPermissionGuide();
+                    return;
+                }
+                wx.showToast({
+                    title: '保存图片失败',
+                    icon: 'none'
+                });
+            }
+        });
+    },
+
+    previewGeneratedImage(filePath) {
+        this.track('share_image_action', {
+            action: 'preview'
+        });
+        wx.previewImage({
+            current: filePath,
+            urls: [filePath]
+        });
+    },
+
+    showAlbumPermissionGuide() {
+        wx.showModal({
+            title: '需要相册权限',
+            content: '请在设置中允许保存图片到相册。',
+            confirmText: '去设置',
+            success: (res) => {
+                if (res.confirm && typeof wx.openSetting === 'function') {
+                    wx.openSetting();
+                }
+            }
+        });
+    },
+
+    isUserCancelled(error) {
+        return !!(error && /cancel/i.test(error.errMsg || error.message || ''));
+    },
+
+    getShareCanvasNode() {
+        return new Promise((resolve, reject) => {
+            if (typeof wx.createSelectorQuery !== 'function') {
+                reject(new Error('Canvas API unavailable'));
+                return;
+            }
+            wx.createSelectorQuery().in(this).select('#shareCanvas').fields({
+                node: true,
+                size: true
+            }).exec((result) => {
+                const canvasInfo = Array.isArray(result) ? result[0] : null;
+                if (!canvasInfo || !canvasInfo.node) {
+                    reject(new Error('Share canvas unavailable'));
+                    return;
+                }
+                resolve(canvasInfo);
+            });
+        });
+    },
+
+    loadCanvasImage(canvas, src) {
+        return new Promise((resolve, reject) => {
+            const image = canvas.createImage();
+            image.onload = () => resolve(image);
+            image.onerror = () => reject(new Error(`Image load failed: ${src}`));
+            image.src = src;
+        });
+    },
+
+    drawRoundedRect(context, x, y, width, height, radius, fillStyle) {
+        const right = x + width;
+        const bottom = y + height;
+        context.beginPath();
+        context.moveTo(x + radius, y);
+        context.lineTo(right - radius, y);
+        context.quadraticCurveTo(right, y, right, y + radius);
+        context.lineTo(right, bottom - radius);
+        context.quadraticCurveTo(right, bottom, right - radius, bottom);
+        context.lineTo(x + radius, bottom);
+        context.quadraticCurveTo(x, bottom, x, bottom - radius);
+        context.lineTo(x, y + radius);
+        context.quadraticCurveTo(x, y, x + radius, y);
+        context.closePath();
+        context.fillStyle = fillStyle;
+        context.fill();
+    },
+
+    renderSharePoster(canvasInfo, qrCodeImage, result) {
+        const width = 375;
+        const height = 500;
+        const pixelRatio = 2;
+        const canvas = canvasInfo.node;
+        const context = canvas.getContext('2d');
+        if (!context) {
+            throw new Error('2D canvas context unavailable');
+        }
+        canvas.width = width * pixelRatio;
+        canvas.height = height * pixelRatio;
+        context.scale(pixelRatio, pixelRatio);
+
+        const poster = this.getSharePosterModel(result);
+        context.fillStyle = '#222222';
+        context.fillRect(0, 0, width, height);
+        context.fillStyle = '#ffffff';
+        context.font = '600 24px sans-serif';
+        context.fillText(poster.title, 20, 42);
+        context.fillStyle = '#999999';
+        context.font = '13px sans-serif';
+        context.fillText('保存这份方案，按参数开始拍摄', 20, 64);
+
+        this.drawRoundedRect(context, 20, 84, 335, 224, 8, '#2d2d2d');
+        poster.rows.forEach((row, index) => {
+            const y = 118 + index * 38;
+            context.fillStyle = '#aaaaaa';
+            context.font = '14px sans-serif';
+            context.textAlign = 'left';
+            context.fillText(row.label, 40, y);
+            context.fillStyle = '#ffffff';
+            context.font = '600 16px sans-serif';
+            context.textAlign = 'right';
+            context.fillText(row.value, 335, y);
+            if (index < poster.rows.length - 1) {
+                context.strokeStyle = '#3a3a3a';
+                context.beginPath();
+                context.moveTo(40, y + 14);
+                context.lineTo(335, y + 14);
+                context.stroke();
+            }
+        });
+
+        context.textAlign = 'left';
+        context.fillStyle = '#cccccc';
+        context.font = '12px sans-serif';
+        context.fillText(`拍摄提醒：${poster.reminder}`.slice(0, 29), 24, 331);
+
+        this.drawRoundedRect(context, 20, 350, 335, 126, 8, '#ffffff');
+        context.drawImage(qrCodeImage, 34, 363, 100, 100);
+        context.fillStyle = '#333333';
+        context.font = '600 17px sans-serif';
+        context.fillText('扫码打开延时摄影计算器', 152, 399);
+        context.fillStyle = '#777777';
+        context.font = '13px sans-serif';
+        context.fillText('重新计算、保存历史与拍摄清单', 152, 424);
+        context.fillStyle = '#999999';
+        context.font = '11px sans-serif';
+        context.fillText(`延时摄影计算器 · v${APP_VERSION}`, 152, 450);
+
+        return {
+            canvas,
+            width,
+            height,
+            pixelRatio
+        };
+    },
+
+    exportSharePoster(rendered) {
+        return new Promise((resolve, reject) => {
+            wx.canvasToTempFilePath({
+                canvas: rendered.canvas,
+                x: 0,
+                y: 0,
+                width: rendered.width,
+                height: rendered.height,
+                destWidth: rendered.width * rendered.pixelRatio,
+                destHeight: rendered.height * rendered.pixelRatio,
+                fileType: 'png',
+                quality: 1,
+                success: (res) => resolve(res.tempFilePath),
+                fail: (error) => reject(new Error(error.errMsg || 'Canvas export failed'))
+            });
+        });
+    },
+
+    generateShareImage(result) {
+        let canvasInfo;
+        return this.getShareCanvasNode().then((info) => {
+            canvasInfo = info;
+            return this.loadCanvasImage(info.node, '/images/qr_code.jpg');
+        }).then((qrCodeImage) => {
+            return this.renderSharePoster(canvasInfo, qrCodeImage, result);
+        }).then((rendered) => {
+            return this.exportSharePoster(rendered);
+        });
     },
 
     onLoad() {

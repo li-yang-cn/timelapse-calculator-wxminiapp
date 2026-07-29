@@ -66,6 +66,11 @@
         <button class="copy-button" bindtap="copyResult" wx:if="{{lastResult}}">复制结果</button>
         <button class="reset-button" bindtap="reset" wx:if="{{showResetButton}}">重置</button>
     </view>
+    <view class="buttons share-actions" wx:if="{{lastResult}}">
+        <button class="share-image-button" loading="{{shareImageGenerating}}" disabled="{{shareImageGenerating}}" bindtap="openShareImageActions">
+            {{shareImageGenerating ? '生成中' : '生成分享图'}}
+        </button>
+    </view>
 </view>
 <view class="history">
     <view class="history-bar" bindtap="toggleHistory">
@@ -101,3 +106,5 @@
 <view class="buttons history-actions" wx:if="{{historyExpanded}}">
     <button class="clear-button" bindtap="clearcache">清空历史</button>
 </view>
+
+<canvas type="2d" id="shareCanvas" class="share-canvas"></canvas>

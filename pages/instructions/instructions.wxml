@@ -62,8 +62,8 @@
     </view>
 
     <view class="section">
-        <view class="section-title">复制与历史</view>
-        <view class="bullet">计算完成后可复制完整拍摄方案，方便保存或发送给同伴。</view>
+        <view class="section-title">分享与历史</view>
+        <view class="bullet">计算完成后可生成带参数和小程序码的分享图，保存到相册或发送给同伴。</view>
         <view class="bullet">历史记录默认折叠，展开后可回填最近 10 条方案。</view>
         <view class="bullet">历史记录保存在本机，清空后不会影响再次计算。</view>
     </view>

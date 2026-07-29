@@ -249,6 +249,29 @@ button {
     margin-top: 10px;
 }
 
+.share-actions {
+    margin-top: 10px;
+}
+
+.share-image-button {
+    width: 116px;
+    height: 40px;
+    margin: 0;
+    padding: 0 12px;
+    font-size: 15px;
+    line-height: 40px;
+    box-sizing: border-box;
+}
+
+.share-canvas {
+    position: fixed;
+    left: -1000px;
+    top: -1000px;
+    width: 375px;
+    height: 500px;
+    pointer-events: none;
+}
+
 .copy-mini-button {
     width: 48px;
     min-width: 48px;
