@@ -1,6 +1,7 @@
 var log = require('../../utils/logs/logs')
+const { APP_VERSION } = require('../../utils/util');
+const { createRuntimeId } = require('../../utils/entry');
 
-const APP_VERSION = '1.2.0';
 const FRAME_CONSISTENCY_TOLERANCE = 1;
 
 Page({
@@ -75,7 +76,6 @@ Page({
         lastResult: null,
         shareImageGenerating: false,
         riskWarnings: [],
-        sessionId: '',
         calculatedFields: {
             duration: false,
             finalDuration: false,
@@ -93,18 +93,19 @@ Page({
         showResetButton: false // 是否显示重置按钮
     },
     track(event, payload) {
+        const app = typeof getApp === 'function' ? getApp() : null;
+        const context = app ? app.globalData : null;
+        if (!this.pageInstanceId) this.pageInstanceId = createRuntimeId('p');
         log.info('[EVENT]', JSON.stringify({
             event,
             ts: Date.now(),
             page: 'index',
             appVersion: APP_VERSION,
-            sessionId: this.data.sessionId,
+            sessionId: context ? context.sessionId : '',
+            entryId: context && context.entry ? context.entry.entryId : undefined,
+            pageInstanceId: this.pageInstanceId,
             payload: payload || {}
         }));
-    },
-
-    createSessionId() {
-        return `s_${Date.now()}_${Math.floor(Math.random() * 1000000)}`;
     },
 
     getCurrentProvidedFields() {
@@ -1134,7 +1135,6 @@ Page({
     },
 
     onLoad() {
-        const sessionId = this.createSessionId();
         let history = [];
         // 获取现有的历史记录
         try {
@@ -1146,7 +1146,6 @@ Page({
         }
         this.setData({
             frameRate: this.data.frameRates[1], // 默认设置为25fps
-            sessionId,
             history,
             historyIsEmpty: history.length === 0
         });

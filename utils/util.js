@@ -1,3 +1,5 @@
+const APP_VERSION = '1.2.0'
+
 const formatTime = date => {
   const year = date.getFullYear()
   const month = date.getMonth() + 1
@@ -15,5 +17,6 @@ const formatNumber = n => {
 }
 
 module.exports = {
+  APP_VERSION,
   formatTime
 }
