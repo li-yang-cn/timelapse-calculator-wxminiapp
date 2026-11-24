@@ -1,4 +1,5 @@
 var log = require('../../utils/logs/logs')
+const { trackPage } = require('../../utils/events');
 
 const STORAGE_KEY = 'plannedEventChecklist';
 
@@ -210,6 +211,10 @@ Page({
 
     onLoad() {
         this.loadChecklist();
+    },
+
+    onShow() {
+        trackPage(this, 'checklist');
     },
 
     loadChecklist() {

@@ -1,6 +1,5 @@
 var log = require('../../utils/logs/logs')
-const { APP_VERSION } = require('../../utils/util');
-const { createRuntimeId } = require('../../utils/entry');
+const { trackPage } = require('../../utils/events');
 
 const FRAME_CONSISTENCY_TOLERANCE = 1;
 
@@ -15,6 +14,7 @@ Page({
         frameRateIndex: 1, // 默认帧速率索引
         presets: [{
                 emoji: '☁️',
+                sceneKey: 'clouds',
                 name: '云流动',
                 duration: 60,
                 finalDuration: 12,
@@ -24,6 +24,7 @@ Page({
             },
             {
                 emoji: '🌇',
+                sceneKey: 'sunset',
                 name: '日落',
                 duration: 90,
                 finalDuration: 15,
@@ -33,6 +34,7 @@ Page({
             },
             {
                 emoji: '🌌',
+                sceneKey: 'stars',
                 name: '星空',
                 duration: 180,
                 finalDuration: 12,
@@ -42,6 +44,7 @@ Page({
             },
             {
                 emoji: '🚗',
+                sceneKey: 'traffic',
                 name: '车流',
                 duration: 10,
                 finalDuration: 10,
@@ -51,6 +54,7 @@ Page({
             },
             {
                 emoji: '🚶',
+                sceneKey: 'crowd',
                 name: '人群',
                 duration: 15,
                 finalDuration: 10,
@@ -60,6 +64,7 @@ Page({
             },
             {
                 emoji: '🌱',
+                sceneKey: 'plants',
                 name: '植物',
                 duration: 720,
                 finalDuration: 12,
@@ -93,19 +98,7 @@ Page({
         showResetButton: false // 是否显示重置按钮
     },
     track(event, payload) {
-        const app = typeof getApp === 'function' ? getApp() : null;
-        const context = app ? app.globalData : null;
-        if (!this.pageInstanceId) this.pageInstanceId = createRuntimeId('p');
-        log.info('[EVENT]', JSON.stringify({
-            event,
-            ts: Date.now(),
-            page: 'index',
-            appVersion: APP_VERSION,
-            sessionId: context ? context.sessionId : '',
-            entryId: context && context.entry ? context.entry.entryId : undefined,
-            pageInstanceId: this.pageInstanceId,
-            payload: payload || {}
-        }));
+        trackPage(this, 'index', event, payload);
     },
 
     getCurrentProvidedFields() {
@@ -140,7 +133,6 @@ Page({
         this.track('calculate_failed', Object.assign({
             source: settings.source,
             reason: failure.code || 'validation_failed',
-            message: failure.message,
             providedFields: settings.providedFields || []
         }, settings.context || {}));
     },
@@ -150,10 +142,8 @@ Page({
         const eventPayload = Object.assign({
             source: settings.source,
             reason: failure.code,
-            message: failure.message,
             providedFields: settings.providedFields || [],
-            basisFields: resolution.basisFields,
-            suggestion: resolution.description
+            basisFields: resolution.basisFields
         }, settings.context || {});
         this.track('calculate_conflict_prompt', eventPayload);
         wx.showModal({
@@ -213,11 +203,6 @@ Page({
             source: options.source,
             providedFields: options.providedFields,
             calculatedFields: this.getCalculatedFieldNames(options.calculatedFields),
-            duration: result.duration,
-            finalDuration: result.finalDuration,
-            frameRate: result.frameRate,
-            interval: result.interval,
-            totalFrames: result.totalFrames,
             riskWarningCount: options.riskWarnings.length,
             riskWarningTypes: this.getRiskWarningTypes(result)
         };
@@ -262,7 +247,7 @@ Page({
                 source: 'preset',
                 providedFields,
                 context: {
-                    presetName: preset.name,
+                    sceneKey: preset.sceneKey,
                     presetIndex: index
                 }
             });
@@ -306,7 +291,7 @@ Page({
             calculatedFields,
             riskWarnings
         });
-        calculationPayload.presetName = preset.name;
+        calculationPayload.sceneKey = preset.sceneKey;
         calculationPayload.presetIndex = index;
         this.track('calculate_success', calculationPayload);
 
@@ -750,14 +735,7 @@ Page({
             showResetButton: true
         });
         this.resetUserInputs();
-        this.track('history_load', {
-            index,
-            duration: Number(item.duration),
-            finalDuration: Number(item.finalDuration),
-            frameRate: Number(item.frameRate),
-            interval: Number(item.interval),
-            totalFrames: Number(item.totalFrames)
-        });
+        this.track('history_load', { index });
         wx.showToast({
             title: '已回填历史记录',
             icon: 'none'
@@ -866,13 +844,12 @@ Page({
             });
             this.showShareImageActions(filePath);
             return filePath;
-        }).catch((error) => {
+        }).catch(() => {
             this.setData({
                 shareImageGenerating: false
             });
             this.track('share_image_failed', {
-                stage: 'generate',
-                message: error && error.message ? error.message : String(error)
+                stage: 'generate'
             });
             wx.showToast({
                 title: '分享图生成失败',
@@ -1149,8 +1126,9 @@ Page({
             history,
             historyIsEmpty: history.length === 0
         });
-        this.track('page_view', {
-            page: 'index'
-        });
+    },
+
+    onShow() {
+        this.track('page_view');
     }
 });

@@ -1,4 +1,5 @@
 var log = require('../../utils/logs/logs')
+const { trackPage } = require('../../utils/events');
 
 function getPageTopPadding() {
     try {
@@ -19,6 +20,10 @@ Page({
         this.setData({
             pageTopPadding: getPageTopPadding()
         });
+    },
+
+    onShow() {
+        trackPage(this, 'instructions');
     },
 
     onReady() {

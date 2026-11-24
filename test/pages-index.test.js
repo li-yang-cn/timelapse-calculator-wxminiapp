@@ -383,7 +383,7 @@ test('preset calculation emits one consolidated success event', () => {
   assert.equal(events.length, 1);
   assert.equal(events[0].event, 'calculate_success');
   assert.equal(events[0].payload.source, 'preset');
-  assert.equal(events[0].payload.presetName, '星空');
+  assert.equal(events[0].payload.sceneKey, 'stars');
   assert.deepEqual(events[0].payload.riskWarningTypes, ['long_duration']);
 });
 

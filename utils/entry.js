@@ -39,4 +39,4 @@ function externalEntryKey(entry) {
     return hasParams || hasExternalScene ? JSON.stringify(entry) : null;
 }
 
-module.exports = { createRuntimeId, normalizeEntry, externalEntryKey };
+module.exports = { createRuntimeId, normalizeEntry, externalEntryKey, PAGE_PATHS };

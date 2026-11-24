@@ -13,7 +13,7 @@
 | --- | --- | --- | --- |
 | [x] | D01 | 平台增长基线命令，从本地日快照输出累计、日活、新增及目标状态 | 真实 28 天基线对账；缺日标记不完整，真实 0 计入 |
 | [x] | D02 | App 冷热启动归一化入口、会话与前台去重 | 冷启一次、同会话切页、热启新入口、长时间返回测试 |
-| [ ] | D03 | 全站统一版本化事件及紧凑序列化，接入清单和说明页访问 | 模拟各页切换，检查事件 ID、载荷边界和旧版兼容 |
+| [x] | D03 | 全站统一版本化事件及紧凑序列化，接入清单和说明页访问 | 模拟各页切换，检查事件 ID、载荷边界和旧版兼容 |
 | [ ] | D04 | 渠道入口与首次／本次来源，含未知来源和保存失败回退 | 两条渠道路径、自然回访、热启和坏参数测试 |
 | [ ] | D05 | 监控用的事件导入与数据质量 CLI，兼容旧仓库日志与新版事件 | 重导保持幂等；输出缺日、坏行和事件版本覆盖 |
 | [ ] | D06 | 监控端受保护的日志身份摘要及覆盖率报告 | 用模拟身份验证跨日一致、账号区分、缺失降级；真机验证另记 |
@@ -58,3 +58,8 @@ D05、D06、D16、D23、D24 使用本仓库可测试的监控工具读取外部�
   - 微信开发者工具手工复测待做。普通编译后在 AppService 控制台过滤 `[EVENT]`，确认只有一条 `cold_start` 的 `entry_open`。依次切到清单、使用说明、计算器，再点击日落预设，确认没有新增 `entry_open`，`calculate_success` 沿用原 `sessionId`。
   - 在同一控制台模拟热启，执行 `getApp().onHide()`，再执行 `getApp().onShow({ path: 'pages/index/index', scene: 1007, query: { shareBatch: 'd02-demo' } })`。确认新增一条 `external_entry` 的 `entry_open`。重复同一组回调应保持条数。再次点击日落预设，确认 `calculate_success` 使用新会话，`pageInstanceId` 沿用切后台前的值。
   - 在同一控制台模拟长时返回，依次执行 `getApp().onHide()`、`getApp().backgroundedAt -= 30 * 60 * 1000`、`getApp().onShow({ scene: 1089 })`。确认新增一条 `background_timeout` 的 `entry_open`，且会话 ID 更新。真机冷热启动、实际前台回调参数及实时日志到达均待验证。若系统已回收进程，重新打开应记录 `cold_start`。
+- 2026-11-24 · D03。App 和已注册页面统一使用 `eventVersion: 1`、独立 `eventId` 和运行环境字段。计算器、清单、使用说明每次 `onShow` 都记录 `page_view`，同一页面实例保留 `pageInstanceId`。单条日志含 `[EVENT] ` 前缀最多 768 个 UTF-8 字节。载荷按事件白名单筛选，预设用 `sceneKey` 表示，计算仅保留字段组合和风险分类。
+  - 自动验收通过。运行 `npm test` 和 `node --test test/app-entry.test.js`。覆盖三页切换和重新展示、冷热启动关联、同一时刻生成的事件 ID、超长文本过滤、UTF-8 字节预算、旧版日志和日志接口异常降级。本机监控的现有 `parseEventMessage` 也通过了模拟旧版日志和实际新序列化输出的解析检查。
+  - 微信开发者工具手工复测待做。普通编译后，在 AppService 控制台过滤 `[EVENT]`。按计算器 → 清单 → 使用说明 → 计算器切换。确认一条 `entry_open` 和四条 `page_view`，各条 `eventId` 不重复，`sessionId` 和 `entryId` 一致，两条计算器访问的 `pageInstanceId` 相同。
+  - 在计算器点击「日落」，确认 `calculate_success` 的 `sceneKey` 为 `sunset`，环境为 `develop`；在清单填写测试名称后切到使用说明，检查访问事件的 `payload` 为空对象。复制完整事件日志行，可在本地 Node 中用 `Buffer.byteLength(line, 'utf8')` 核对 768 字节预算。
+  - 真机切页和前后台回调顺序、体验版环境标记及微信实时日志到达均待验证。

@@ -1,5 +1,4 @@
-const log = require('./utils/logs/logs');
-const { APP_VERSION } = require('./utils/util');
+const { trackEvent } = require('./utils/events');
 const { createRuntimeId, normalizeEntry, externalEntryKey } = require('./utils/entry');
 
 const SESSION_TIMEOUT_MS = 30 * 60 * 1000;
@@ -51,14 +50,11 @@ App({
         const entryId = createRuntimeId('e');
         this.globalData.sessionId = sessionId;
         this.globalData.entry = { ...entry, entryId, reason };
-        log.info('[EVENT]', JSON.stringify({
-            event: 'entry_open',
-            ts: Date.now(),
-            page: 'app',
-            appVersion: APP_VERSION,
-            sessionId,
-            payload: { entryId, reason, path: entry.path, platformScene: entry.platformScene }
-        }));
+        trackEvent('entry_open', 'app', this.globalData, {
+            reason,
+            path: entry.path,
+            platformScene: entry.platformScene
+        });
     },
     globalData: {
         userInfo: null,
