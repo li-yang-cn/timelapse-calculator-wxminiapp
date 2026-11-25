@@ -1,6 +1,7 @@
 const log = require('./logs/logs');
 const { APP_VERSION } = require('./util');
 const { createRuntimeId, PAGE_PATHS } = require('./entry');
+const { normalizeSource } = require('./attribution');
 
 const EVENT_VERSION = 1;
 const EVENT_PREFIX = '[EVENT] ';
@@ -43,7 +44,9 @@ const SCHEMAS = new Map(Object.entries({
     entry_open: {
         reason: oneOf('cold_start', 'external_entry', 'background_timeout'),
         path: (value) => value === null || PAGE_PATHS.has(value) ? value : undefined,
-        platformScene: (value) => value === null ? null : platformScene(value)
+        platformScene: (value) => value === null ? null : platformScene(value),
+        currentSource: normalizeSource,
+        firstSource: normalizeSource
     },
     page_view: {},
     calculate_success: {

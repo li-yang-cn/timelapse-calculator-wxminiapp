@@ -14,7 +14,7 @@
 | [x] | D01 | 平台增长基线命令，从本地日快照输出累计、日活、新增及目标状态 | 真实 28 天基线对账；缺日标记不完整，真实 0 计入 |
 | [x] | D02 | App 冷热启动归一化入口、会话与前台去重 | 冷启一次、同会话切页、热启新入口、长时间返回测试 |
 | [x] | D03 | 全站统一版本化事件及紧凑序列化，接入清单和说明页访问 | 模拟各页切换，检查事件 ID、载荷边界和旧版兼容 |
-| [ ] | D04 | 渠道入口与首次／本次来源，含未知来源和保存失败回退 | 两条渠道路径、自然回访、热启和坏参数测试 |
+| [x] | D04 | 渠道入口与首次／本次来源，含未知来源和保存失败回退 | 两条渠道路径、自然回访、热启和坏参数测试 |
 | [ ] | D05 | 监控用的事件导入与数据质量 CLI，兼容旧仓库日志与新版事件 | 重导保持幂等；输出缺日、坏行和事件版本覆盖 |
 | [ ] | D06 | 监控端受保护的日志身份摘要及覆盖率报告 | 用模拟身份验证跨日一致、账号区分、缺失降级；真机验证另记 |
 | [ ] | D07 | 新手首屏场景卡片，带名称、拍摄条件与参考参数 | 日落、云流动、星空和其他现存场景可选择并计算 |
@@ -63,3 +63,9 @@ D05、D06、D16、D23、D24 使用本仓库可测试的监控工具读取外部�
   - 微信开发者工具手工复测待做。普通编译后，在 AppService 控制台过滤 `[EVENT]`。按计算器 → 清单 → 使用说明 → 计算器切换。确认一条 `entry_open` 和四条 `page_view`，各条 `eventId` 不重复，`sessionId` 和 `entryId` 一致，两条计算器访问的 `pageInstanceId` 相同。
   - 在计算器点击「日落」，确认 `calculate_success` 的 `sceneKey` 为 `sunset`，环境为 `develop`；在清单填写测试名称后切到使用说明，检查访问事件的 `payload` 为空对象。复制完整事件日志行，可在本地 Node 中用 `Buffer.byteLength(line, 'utf8')` 核对 768 字节预算。
   - 真机切页和前后台回调顺序、体验版环境标记及微信实时日志到达均待验证。
+- 2026-11-25 · D04。App 启动和新外部入口识别已登记的渠道与活动，在 `entry_open` 记录 `firstSource` 和 `currentSource`。首次来源按本地存储记录，缺失或非法入口归为 `unknown`。读失败时首次来源暂记 `unknown`，已有记录保留；写失败时使用本进程首次观测值，下次新入口重试。计算事件可通过 `entryId` 关联本次来源。首次来源口径为当前小程序本地存储，用户级去重留待后续日次。
+  - 自动验收通过。运行 `npm test` 和 `node --test test/app-entry.test.js`。覆盖两条渠道入口、冷热启动、重复前台回调、自然回访、坏参数、损坏的来源记录、读写故障及恢复后的计算事件关联。
+  - 微信开发者工具手工复测待做。在测试环境从 AppService 控制台执行 `wx.removeStorageSync('growthFirstSource')`，再自定义编译，启动页面填 `pages/index/index`，启动参数填 `channel=tutorial&campaign=sunset`。过滤 `[EVENT]`，应只有一条 `cold_start`，两个来源都为 `tutorial` / `sunset`。
+  - 在同一 AppService 控制台执行 `getApp().onHide()`，再执行 `getApp().onShow({ path: 'pages/index/index', scene: 1007, query: { channel: 'photo_club', campaign: 'sunset_walk' } })`。应新增一条 `external_entry`，本次来源为 `photo_club` / `sunset_walk`，首次仍为 `tutorial` / `sunset`。重复这组回调应保持入口条数；点击「日落」后，`calculate_success` 应沿用该热启的 `entryId`。
+  - 保留存储，重新冷编译同一页面，清空启动参数。本次来源应为 `unknown`，首次来源仍为 `tutorial` / `sunset`。再用 `channel=tutorial&campaign=sunset_walk` 自定义编译，确认本次来源为 `unknown`，计算器可正常使用。
+  - 真机冷热启动、渠道路径的实际传参及微信实时日志到达均待验证。

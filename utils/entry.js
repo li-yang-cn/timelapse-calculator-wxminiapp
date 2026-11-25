@@ -1,10 +1,12 @@
+const { normalizeSource } = require('./attribution');
+
 const PAGE_PATHS = new Set([
     'pages/index/index',
     'pages/checklist/checklist',
     'pages/instructions/instructions'
 ]);
 const RESUME_SCENES = new Set([1000, 1001, 1038, 1089, 1090, 1103, 1104]);
-const ENTRY_KEYS = ['channel', 'campaign', 'sceneKey', 'planId', 'shareBatch'];
+const ENTRY_KEYS = ['sceneKey', 'planId', 'shareBatch'];
 const ENTRY_TOKEN = /^[A-Za-z0-9_-]{1,64}$/;
 let idSequence = 0;
 
@@ -18,7 +20,8 @@ function normalizeEntry(options = {}) {
     const { path, scene, query } = options || {};
     const route = typeof path === 'string' ? path.trim().replace(/^\//, '') : '';
     const sceneValue = typeof scene === 'string' && /^\d{4}$/.test(scene) ? Number(scene) : scene;
-    const params = {};
+    const source = normalizeSource(query);
+    const params = source && source.channel !== 'unknown' ? source : {};
     for (const key of ENTRY_KEYS) {
         const value = query && Object.prototype.hasOwnProperty.call(query, key) ? query[key] : undefined;
         if (typeof value === 'string' && ENTRY_TOKEN.test(value)) {

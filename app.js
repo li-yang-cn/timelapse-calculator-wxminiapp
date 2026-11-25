@@ -1,22 +1,25 @@
 const { trackEvent } = require('./utils/events');
 const { createRuntimeId, normalizeEntry, externalEntryKey } = require('./utils/entry');
+const { UNKNOWN_SOURCE, normalizeSource, createFirstSourceTracker } = require('./utils/attribution');
 
 const SESSION_TIMEOUT_MS = 30 * 60 * 1000;
 
 App({
     onLaunch(options) {
         this.backgroundedAt = null;
+        this.getFirstSource = createFirstSourceTracker();
         const entry = normalizeEntry(options);
         this.lastExternalEntryKey = externalEntryKey(entry);
         this.openEntry({ ...entry, path: entry.path || 'pages/index/index' }, 'cold_start');
 
-        // 展示本地存储能力
-        let logs = wx.getStorageSync('logs') || []
-        if (!Array.isArray(logs)) {
-            logs = []
+        try {
+            const storedLogs = wx.getStorageSync('logs');
+            const logs = Array.isArray(storedLogs) ? storedLogs : [];
+            logs.unshift(Date.now());
+            wx.setStorageSync('logs', logs);
+        } catch {
+            // 本地存储不可用时仍可启动小程序。
         }
-        logs.unshift(Date.now())
-        wx.setStorageSync('logs', logs)
 
         // 登录
         wx.login({
@@ -48,12 +51,16 @@ App({
     openEntry(entry, reason) {
         const sessionId = createRuntimeId('s');
         const entryId = createRuntimeId('e');
+        const currentSource = normalizeSource(entry.params) || UNKNOWN_SOURCE;
+        const firstSource = this.getFirstSource(currentSource);
         this.globalData.sessionId = sessionId;
         this.globalData.entry = { ...entry, entryId, reason };
         trackEvent('entry_open', 'app', this.globalData, {
             reason,
             path: entry.path,
-            platformScene: entry.platformScene
+            platformScene: entry.platformScene,
+            currentSource,
+            firstSource
         });
     },
     globalData: {

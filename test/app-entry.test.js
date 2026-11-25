@@ -6,6 +6,10 @@ const INDEX = 'pages/index/index';
 const CHECKLIST = 'pages/checklist/checklist';
 const INSTRUCTIONS = 'pages/instructions/instructions';
 const SESSION_TIMEOUT_MS = 30 * 60 * 1000;
+const FIRST_SOURCE_KEY = 'growthFirstSource';
+const TUTORIAL = { channel: 'tutorial', campaign: 'sunset' };
+const PHOTO_CLUB = { channel: 'photo_club', campaign: 'sunset_walk' };
+const UNKNOWN = { channel: 'unknown' };
 
 // miniapp-minitor 通过固定前缀取出 JSON，不要求新字段。
 function parseMonitorEvent(message) {
@@ -13,10 +17,9 @@ function parseMonitorEvent(message) {
   return message.startsWith(prefix) ? JSON.parse(message.slice(prefix.length)) : null;
 }
 
-function launchApp(t, { envVersion, onLog } = {}) {
+function launchApp(t, { envVersion, onLog, storage = new Map() } = {}) {
   const events = [];
   const messages = [];
-  const storage = new Map();
   let app;
   let now = 0;
   t.mock.method(Date, 'now', () => now);
@@ -86,7 +89,9 @@ test('cold launch and first foreground emit one entry and pages use the App sess
     entryId: app.globalData.entry.entryId,
     reason: 'cold_start',
     path: INDEX,
-    platformScene: 1001
+    platformScene: 1001,
+    firstSource: UNKNOWN,
+    currentSource: UNKNOWN
   });
 
   const index = loadPage(INDEX);
@@ -120,7 +125,7 @@ test('new hot entry rotates the session of an existing calculator and deduplicat
   app.onShow({ path: INDEX, scene: 1007, query: {
     shareBatch: 'demo-batch', channel: 'demo', campaign: 'x'.repeat(65), planId: [], ignored: 'private-value'
   }, shareTicket: 'test-ticket' });
-  assert.deepEqual(app.globalData.entry.params, { channel: 'demo', shareBatch: 'demo-batch' });
+  assert.deepEqual(app.globalData.entry.params, { shareBatch: 'demo-batch' });
   const warm = entries().at(-1);
   assert.equal(warm.payload.reason, 'external_entry');
   assert.notEqual(warm.sessionId, view.sessionId);
@@ -143,7 +148,7 @@ test('new hot entry rotates the session of an existing calculator and deduplicat
   assert.equal(calculation.entryId, warm.payload.entryId);
   assert.equal(calculation.pageInstanceId, view.pageInstanceId);
   assert.doesNotMatch(JSON.stringify(events), /demo-batch|private-value|test-ticket/);
-  assert.deepEqual([...storage.keys()].sort(), ['calculationHistory', 'logs']);
+  assert.deepEqual([...storage.keys()].sort(), ['calculationHistory', FIRST_SOURCE_KEY, 'logs']);
 
   app.onHide();
   app.onShow({ ...sameEntry, query: { ...sameEntry.query, shareBatch: 'another-batch' } });
@@ -272,4 +277,121 @@ test('ordinary return starts a fresh session at 30 minutes of background time', 
   assert.notEqual(resumed.sessionId, cold.sessionId);
   assert.notEqual(resumed.payload.entryId, cold.payload.entryId);
   assert.deepEqual(app.globalData.entry.params, {});
+});
+
+test('two channel paths keep first source across hot entries, natural returns and cold restarts', (t) => {
+  const { app, entries, events, storage, advance, loadPage } = launchApp(t, { envVersion: 'develop' });
+  const tutorial = { path: INDEX, scene: 1007, query: TUTORIAL };
+  const club = { path: INDEX, scene: 1007, query: PHOTO_CLUB };
+  app.onLaunch(tutorial);
+  app.onShow(tutorial);
+  assert.equal(entries().length, 1);
+  assert.deepEqual(entries()[0].payload.firstSource, TUTORIAL);
+  assert.deepEqual(entries()[0].payload.currentSource, TUTORIAL);
+  assert.deepEqual(storage.get(FIRST_SOURCE_KEY), TUTORIAL);
+
+  const page = loadPage(INDEX);
+  app.onHide();
+  app.onShow(club);
+  page.onShow();
+  page.applyPreset({ currentTarget: { dataset: { index: 1 } } });
+  assert.equal(entries().length, 2);
+  const hot = entries().at(-1);
+  assert.equal(hot.payload.reason, 'external_entry');
+  assert.deepEqual(hot.payload.firstSource, TUTORIAL);
+  assert.deepEqual(hot.payload.currentSource, PHOTO_CLUB);
+  assert.equal(events.at(-1).event, 'calculate_success');
+  assert.equal(events.at(-1).entryId, hot.entryId);
+
+  app.onHide();
+  app.onShow(club);
+  app.onHide();
+  app.onShow({ scene: 1089 });
+  assert.equal(entries().length, 2);
+  app.onHide();
+  advance(SESSION_TIMEOUT_MS);
+  app.onShow({ scene: 1089 });
+  assert.equal(entries().at(-1).payload.reason, 'background_timeout');
+  assert.deepEqual(entries().at(-1).payload.firstSource, TUTORIAL);
+  assert.deepEqual(entries().at(-1).payload.currentSource, UNKNOWN);
+
+  app.onLaunch({ path: INDEX, scene: 1001 });
+  assert.equal(entries().at(-1).payload.reason, 'cold_start');
+  assert.deepEqual(entries().at(-1).payload.firstSource, TUTORIAL);
+  assert.deepEqual(entries().at(-1).payload.currentSource, UNKNOWN);
+  assert.deepEqual(storage.get(FIRST_SOURCE_KEY), TUTORIAL);
+});
+
+test('bad channel parameters are unknown and an unknown first source stays recorded', (t) => {
+  const { app, entries, messages, storage } = launchApp(t);
+  const badQueries = [
+    { channel: 'unregistered_channel', campaign: 'sunset' },
+    { channel: 'tutorial', campaign: 'sunset_walk' },
+    { channel: 'tutorial', campaign: 'x'.repeat(65) },
+    { channel: 'tutorial', campaign: ['sunset'] },
+    { channel: 'tutorial', campaign: '' },
+    { channel: 'tutorial', campaign: '测试' },
+    { campaign: 'sunset' },
+    Object.create(TUTORIAL)
+  ];
+  storage.set(FIRST_SOURCE_KEY, { channel: 'tutorial', campaign: 'invalid_saved_campaign' });
+  for (const query of badQueries) {
+    app.onLaunch({ path: INDEX, scene: 1007, query });
+    assert.deepEqual(entries().at(-1).payload.currentSource, UNKNOWN);
+    assert.deepEqual(entries().at(-1).payload.firstSource, UNKNOWN);
+  }
+  assert.deepEqual(storage.get(FIRST_SOURCE_KEY), UNKNOWN);
+  assert.doesNotMatch(messages.join('\n'), /unregistered_channel|invalid_saved_campaign|sunset_walk|测试/);
+
+  app.onShow();
+  app.onHide();
+  app.onShow({ path: INDEX, scene: 1089, query: badQueries[0] });
+  assert.equal(entries().length, badQueries.length);
+
+  app.onHide();
+  app.onShow({ path: INDEX, scene: 1007, query: PHOTO_CLUB });
+  assert.deepEqual(entries().at(-1).payload.firstSource, UNKNOWN);
+  assert.deepEqual(entries().at(-1).payload.currentSource, PHOTO_CLUB);
+});
+
+test('a source write failure preserves the earliest source in memory and retries on a new entry', (t) => {
+  const { app, entries, storage, loadPage } = launchApp(t);
+  const write = wx.setStorageSync;
+  wx.setStorageSync = (key, value) => {
+    if (key === FIRST_SOURCE_KEY) throw new Error('storage full');
+    write(key, value);
+  };
+  app.onLaunch({ path: INDEX, scene: 1007, query: TUTORIAL });
+  assert.deepEqual(entries()[0].payload.firstSource, TUTORIAL);
+  assert.equal(storage.has(FIRST_SOURCE_KEY), false);
+  const page = loadPage(INDEX);
+  page.applyPreset({ currentTarget: { dataset: { index: 1 } } });
+  assert.equal(page.data.lastResult.totalFrames, 375);
+
+  wx.setStorageSync = write;
+  app.onShow();
+  app.onHide();
+  app.onShow({ path: INDEX, scene: 1007, query: PHOTO_CLUB });
+  assert.deepEqual(entries().at(-1).payload.firstSource, TUTORIAL);
+  assert.deepEqual(entries().at(-1).payload.currentSource, PHOTO_CLUB);
+  assert.deepEqual(storage.get(FIRST_SOURCE_KEY), TUTORIAL);
+});
+
+test('a source read failure reports an unknown first source without overwriting storage', (t) => {
+  const storage = new Map([[FIRST_SOURCE_KEY, PHOTO_CLUB]]);
+  const { app, entries } = launchApp(t, { storage });
+  const read = wx.getStorageSync;
+  wx.getStorageSync = () => { throw new Error('storage unavailable'); };
+  app.onLaunch({ path: INDEX, scene: 1007, query: TUTORIAL });
+  assert.deepEqual(entries()[0].payload.firstSource, UNKNOWN);
+  assert.deepEqual(entries()[0].payload.currentSource, TUTORIAL);
+  assert.deepEqual(storage.get(FIRST_SOURCE_KEY), PHOTO_CLUB);
+
+  wx.getStorageSync = read;
+  app.onShow();
+  app.onHide();
+  app.onShow({ path: INDEX, scene: 1007, query: { channel: 'tutorial' } });
+  assert.deepEqual(entries().at(-1).payload.firstSource, PHOTO_CLUB);
+  assert.deepEqual(entries().at(-1).payload.currentSource, { channel: 'tutorial' });
+  assert.deepEqual(storage.get(FIRST_SOURCE_KEY), PHOTO_CLUB);
 });
