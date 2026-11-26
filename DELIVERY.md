@@ -15,7 +15,7 @@
 | [x] | D02 | App 冷热启动归一化入口、会话与前台去重 | 冷启一次、同会话切页、热启新入口、长时间返回测试 |
 | [x] | D03 | 全站统一版本化事件及紧凑序列化，接入清单和说明页访问 | 模拟各页切换，检查事件 ID、载荷边界和旧版兼容 |
 | [x] | D04 | 渠道入口与首次／本次来源，含未知来源和保存失败回退 | 两条渠道路径、自然回访、热启和坏参数测试 |
-| [ ] | D05 | 监控用的事件导入与数据质量 CLI，兼容旧仓库日志与新版事件 | 重导保持幂等；输出缺日、坏行和事件版本覆盖 |
+| [x] | D05 | 监控用的事件导入与数据质量 CLI，兼容旧仓库日志与新版事件 | 重导保持幂等；输出缺日、坏行和事件版本覆盖 |
 | [ ] | D06 | 监控端受保护的日志身份摘要及覆盖率报告 | 用模拟身份验证跨日一致、账号区分、缺失降级；真机验证另记 |
 | [ ] | D07 | 新手首屏场景卡片，带名称、拍摄条件与参考参数 | 日落、云流动、星空和其他现存场景可选择并计算 |
 | [ ] | D08 | 手动入门引导，按拍摄和成片时长给出可执行结果 | 新手走通两项输入；高级输入、历史回填仍可用 |
@@ -69,3 +69,25 @@ D05、D06、D16、D23、D24 使用本仓库可测试的监控工具读取外部�
   - 在同一 AppService 控制台执行 `getApp().onHide()`，再执行 `getApp().onShow({ path: 'pages/index/index', scene: 1007, query: { channel: 'photo_club', campaign: 'sunset_walk' } })`。应新增一条 `external_entry`，本次来源为 `photo_club` / `sunset_walk`，首次仍为 `tutorial` / `sunset`。重复这组回调应保持入口条数；点击「日落」后，`calculate_success` 应沿用该热启的 `entryId`。
   - 保留存储，重新冷编译同一页面，清空启动参数。本次来源应为 `unknown`，首次来源仍为 `tutorial` / `sunset`。再用 `channel=tutorial&campaign=sunset_walk` 自定义编译，确认本次来源为 `unknown`，计算器可正常使用。
   - 真机冷热启动、渠道路径的实际传参及微信实时日志到达均待验证。
+- 2026-11-26 · D05。新增 Python 3 监控 CLI `scripts/growth-event-import.py`。按北京时间的 `report_date` 导入指定日期范围，在独立 SQLite 中保存去重键、日期、事件名、版本、应用版本和环境。新版按全局事件 ID 保留首次导入记录，旧版按监控事件投影的稳定摘要去重。JSON 报告给出库内去重后的版本计数和日期覆盖，以及本次导入的坏行、重复和不支持版本计数。可选的 `--runs` 识别已采集且日志总数为零的日期；仅有事件的日期列在 `eventOnlyDates`，两类证据都缺失的日期列在 `missingDates`。
+  - 历史数据支持监控的 `realtime_events.jsonl`。新版覆盖统计使用保留 `[EVENT]` 原始字段的 `realtime_log_messages.jsonl` 脱敏副本。现有 `realtime_events.jsonl` 投影省略 `eventVersion` 和 `eventId`，其中的无版本记录归入 `legacy`。涉及新版的日期应只用消息导出，以免同一新版事件从两种导出各计一次。
+  - 自动验收通过。运行 `npm test` 和 `node --test test/growth-event-import.test.js`。覆盖旧导出与旧消息去重、小程序实际序列化的新版事件按 ID 去重、重复导入、跨月缺日、真实零日志、坏行、未知版本和读取失败后整批回滚。
+  - 终端手工复测通过。在临时目录按下方内容生成合成输入，连续两次使用同一 SQLite 路径。首次 `inserted=2`，重导 `inserted=0`、`duplicates=2`。两次均应有旧版和新版各 1 条、坏行 1 条、11 月 2 日为零日志、11 月 3 日为缺日。
+
+    ```bash
+    d05_tmp=$(mktemp -d)
+    cat > "$d05_tmp/realtime_log_messages.jsonl" <<'JSONL'
+    {"report_date":"2026-11-01","message":"[EVENT] {\"event\":\"page_view\",\"appVersion\":\"1.2.0\"}"}
+    {"report_date":"2026-11-01","message":"[EVENT] {\"event\":\"page_view\",\"eventVersion\":1,\"eventId\":\"evt_demo_abc_1\",\"environment\":\"trial\"}"}
+    {"report_date":"2026-11-01","message":"[EVENT] {"}
+    JSONL
+    cat > "$d05_tmp/runs.jsonl" <<'JSONL'
+    {"report_date":"2026-11-02","realtime_log_total":0}
+    JSONL
+    for d05_attempt in 1 2; do
+      python3 scripts/growth-event-import.py "$d05_tmp/realtime_log_messages.jsonl" \
+        "$d05_tmp/events.sqlite" 2026-11-01 2026-11-03 --runs "$d05_tmp/runs.jsonl"
+    done
+    ```
+
+  - 真实监控导出对账、微信真机和实时日志到达待验证。
