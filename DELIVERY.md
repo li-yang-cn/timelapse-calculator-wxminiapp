@@ -16,7 +16,7 @@
 | [x] | D03 | 全站统一版本化事件及紧凑序列化，接入清单和说明页访问 | 模拟各页切换，检查事件 ID、载荷边界和旧版兼容 |
 | [x] | D04 | 渠道入口与首次／本次来源，含未知来源和保存失败回退 | 两条渠道路径、自然回访、热启和坏参数测试 |
 | [x] | D05 | 监控用的事件导入与数据质量 CLI，兼容旧仓库日志与新版事件 | 重导保持幂等；输出缺日、坏行和事件版本覆盖 |
-| [ ] | D06 | 监控端受保护的日志身份摘要及覆盖率报告 | 用模拟身份验证跨日一致、账号区分、缺失降级；真机验证另记 |
+| [x] | D06 | 监控端受保护的日志身份摘要及覆盖率报告 | 用模拟身份验证跨日一致、账号区分、缺失降级；真机验证另记 |
 | [ ] | D07 | 新手首屏场景卡片，带名称、拍摄条件与参考参数 | 日落、云流动、星空和其他现存场景可选择并计算 |
 | [ ] | D08 | 手动入门引导，按拍摄和成片时长给出可执行结果 | 新手走通两项输入；高级输入、历史回填仍可用 |
 | [ ] | D09 | 按可解参数组合给缺项提示，同时区分校验与求解异常 | 组合、空值、零值、输入错误后恢复测试 |
@@ -91,3 +91,42 @@ D05、D06、D16、D23、D24 使用本仓库可测试的监控工具读取外部�
     ```
 
   - 真实监控导出对账、微信真机和实时日志到达待验证。
+
+- 2026-11-27 · D06。现有事件导入 CLI 增加 `--monitor-sqlite`。通过只读 SQLite 连接读取监控消息表，以服务端环境变量 `GROWTH_IDENTITY_KEY` 提供的 32 字节十六进制密钥对监控标为 `openid` 的字段生成 HMAC-SHA-256 摘要。每个小程序使用独立密钥，重导使用同一密钥，换密钥时使用新的分析库。输出库须由当前用户独占，新建库权限为 `0600`。原始身份和密钥均不写入分析库，JSON 报告只输出计数和比例。
+  - `identityCoverage` 按全窗口和逐日汇总，分母为已接纳的去重事件。缺失、格式无效或同一事件出现冲突的摘要计入 `withoutDigest`。有事件但无摘要时为 `unavailable`、比例为 0，无事件时比例为 `null`。旧 JSONL 继续导入，已有事件可从监控 SQLite 重导补齐摘要。同一日期使用一种消息来源，沿用 D05 的事件去重口径。
+  - 自动验收通过。运行 `npm test` 和 `node --test --test-name-pattern='D06' test/growth-event-import.test.js`。覆盖跨日稳定、账号区分、重导补齐、缺失与冲突降级、重导幂等、密钥及输出权限校验。
+  - 终端手工复测通过。以下命令使用合成监控库。首次新增 5 条，重导新增 0 条并识别 5 条重复。两次覆盖率均为 3/5，11 月 1 日为 `complete`、2 日为 `partial`、3 日为 `unavailable`、4 日比例为 `null`。末行 `(3, 2)` 表示 3 条事件有摘要、共 2 种摘要。
+
+    ```bash
+    (
+      set -e
+      d06_tmp=$(mktemp -d)
+      trap 'rm -rf -- "$d06_tmp"' EXIT
+      python3 - "$d06_tmp/monitor.sqlite" <<'PY'
+    import json, sqlite3, sys
+    with sqlite3.connect(sys.argv[1]) as db:
+        db.execute("""CREATE TABLE realtime_log_messages (
+            report_date TEXT, message_id TEXT, timestamp INTEGER, level INTEGER,
+            url TEXT, traceid TEXT, marker TEXT, message TEXT, openid TEXT)""")
+        for index, (day, subject) in enumerate([
+            (1, 'synthetic-A'), (2, 'synthetic-A'), (2, 'synthetic-B'), (2, None), (3, None)
+        ], 1):
+            event = dict(event='page_view', eventVersion=1, eventId=f'evt_demo_event_{index}')
+            db.execute("""INSERT INTO realtime_log_messages
+                (report_date, message_id, message, openid) VALUES (?, ?, ?, ?)""",
+                (f'2026-11-{day:02}', str(index), '[EVENT] ' + json.dumps(event), subject))
+    PY
+      export GROWTH_IDENTITY_KEY=$(python3 -c 'import secrets; print(secrets.token_hex(32))')
+      for d06_attempt in 1 2; do
+        python3 scripts/growth-event-import.py "$d06_tmp/monitor.sqlite" \
+          "$d06_tmp/events.sqlite" 2026-11-01 2026-11-04 --monitor-sqlite
+      done
+      python3 - "$d06_tmp/events.sqlite" <<'PY'
+    import sqlite3, sys
+    with sqlite3.connect(sys.argv[1]) as db:
+        print(db.execute("SELECT COUNT(*), COUNT(DISTINCT subject_digest) FROM event_identities").fetchone())
+    PY
+    )
+    ```
+
+  - 真实监控覆盖率、平台字段语义及微信真机验证待做。在受限监控环境中，用同一测试账号跨日、跨设备各触发一次事件，再用另一测试账号触发事件。核对同账号摘要一致、不同账号摘要有别，并核对缺失字段的实际比例，只记录核验结果。平台身份语义验证通过前，用户级指标标记为不可用。

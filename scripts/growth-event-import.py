@@ -1,12 +1,15 @@
 import argparse
 from collections import Counter
-from contextlib import closing
+from contextlib import closing, contextmanager
 from datetime import date, timedelta
 import hashlib
+import hmac
 import json
+import os
 from pathlib import Path
 import re
 import sqlite3
+import stat
 
 
 EVENT_PREFIX = '[EVENT] '
@@ -78,10 +81,40 @@ def read_rows(path, counts):
                 counts['badLines'] += 1
 
 
-def import_events(db, path, start, end):
-    counts = Counter(inserted=0, duplicates=0, badLines=0, otherLogs=0, outsideWindow=0)
+@contextmanager
+def event_rows(path, counts, start, end, monitor_sqlite):
+    if not monitor_sqlite:
+        yield read_rows(path, counts)
+        return
+    with closing(sqlite3.connect(path.resolve().as_uri() + '?mode=ro', uri=True)) as source:
+        source.row_factory = sqlite3.Row
+        rows = source.execute('''SELECT report_date, timestamp, level, url, traceid,
+            marker, message, openid FROM realtime_log_messages
+            WHERE report_date BETWEEN ? AND ? ORDER BY report_date, message_id''',
+                              (start.isoformat(), end.isoformat()))
+        yield map(dict, rows)
+
+
+def identity_digest(key, value):
+    if (not isinstance(value, str) or not 1 <= len(value) <= 256 or
+            any(not ('!' <= char <= '~') for char in value)):
+        return None
+    return hmac.digest(key, b'growth-log-identity-v1\0' + value.encode('ascii'), 'sha256')
+
+
+def save_identity(db, version, key, day, subject):
+    # D05 keeps the first event date. A replay on another date cannot change its identity.
+    db.execute('''INSERT INTO event_identities (event_version, event_key, subject_digest)
+        SELECT event_version, event_key, ? FROM events
+        WHERE event_version = ? AND event_key = ? AND report_date = ?
+        ON CONFLICT(event_version, event_key) DO UPDATE SET subject_digest = NULL
+        WHERE event_identities.subject_digest IS NOT excluded.subject_digest''',
+               (subject, version, key, day))
+
+
+def import_events(db, rows, counts, start, end, identity_key):
     unsupported = Counter()
-    for row in read_rows(path, counts):
+    for row in rows:
         try:
             event_date = parse_date(row.get('report_date'))
             if not start <= event_date <= end:
@@ -116,6 +149,10 @@ def import_events(db, path, start, end):
                                ON CONFLICT(event_version, event_key) DO NOTHING''',
                             (version, key, day, name, app_version, environment))
         counts['inserted' if cursor.rowcount else 'duplicates'] += 1
+        if identity_key is not None:
+            subject = identity_digest(identity_key, row.get('openid'))
+            if subject is not None:
+                save_identity(db, version, key, day, subject)
     return {**counts, 'unsupportedVersions': dict(unsupported)}
 
 
@@ -144,10 +181,16 @@ def build_report(db, start, end):
     bounds = (start.isoformat(), end.isoformat())
     version_counts = {'legacy': 0, '1': 0}
     days_with_events = set()
-    for day, version, count in db.execute('''SELECT report_date, event_version, COUNT(*) FROM events
-            WHERE report_date BETWEEN ? AND ? GROUP BY report_date, event_version''', bounds):
+    totals_by_day = Counter()
+    covered_by_day = Counter()
+    for day, version, count, covered in db.execute('''SELECT report_date, events.event_version,
+            COUNT(*), COUNT(subject_digest) FROM events
+            LEFT JOIN event_identities USING (event_version, event_key)
+            WHERE report_date BETWEEN ? AND ? GROUP BY report_date, events.event_version''', bounds):
         days_with_events.add(day)
         version_counts['legacy' if version == 0 else str(version)] += count
+        totals_by_day[day] += count
+        covered_by_day[day] += covered
     collection = dict(db.execute('SELECT * FROM collection_days WHERE report_date BETWEEN ? AND ?', bounds))
     dates = [(start + timedelta(days=offset)).isoformat() for offset in range((end - start).days + 1)]
     return {
@@ -157,7 +200,52 @@ def build_report(db, start, end):
         'eventOnlyDates': sorted(days_with_events.difference(collection)),
         'eventCount': sum(version_counts.values()),
         'eventVersions': version_counts,
+        'identityCoverage': {
+            **coverage(sum(totals_by_day.values()), sum(covered_by_day.values())),
+            'byDate': {day: coverage(totals_by_day[day], covered_by_day[day]) for day in dates},
+        },
     }
+
+
+def coverage(total, covered):
+    status = 'unavailable'
+    if covered:
+        status = 'complete' if covered == total else 'partial'
+    return {'eventCount': total, 'withDigest': covered, 'withoutDigest': total - covered,
+            'ratio': covered / total if total else None, 'status': status}
+
+
+def load_identity_key():
+    value = os.environ.get('GROWTH_IDENTITY_KEY', '')
+    if not re.fullmatch(r'[0-9a-fA-F]{64}', value):
+        raise ValueError('身份导入需要通过 GROWTH_IDENTITY_KEY 提供 32 字节十六进制密钥')
+    return bytes.fromhex(value)
+
+
+def init_identity_tables(db, key):
+    db.execute('''CREATE TABLE IF NOT EXISTS event_identities (
+        event_version INTEGER NOT NULL, event_key TEXT NOT NULL, subject_digest BLOB,
+        PRIMARY KEY (event_version, event_key))''')
+    if key is None:
+        return
+    db.execute('''CREATE TABLE IF NOT EXISTS identity_key_check (
+        singleton INTEGER PRIMARY KEY CHECK (singleton = 1), verifier BLOB NOT NULL)''')
+    verifier = hmac.digest(key, b'growth-log-identity-key-check-v1', 'sha256')
+    db.execute('INSERT OR IGNORE INTO identity_key_check VALUES (1, ?)', (verifier,))
+    stored, = db.execute('SELECT verifier FROM identity_key_check WHERE singleton = 1').fetchone()
+    if not hmac.compare_digest(stored, verifier):
+        raise ValueError('身份密钥与该 SQLite 库不匹配，请使用原密钥或新的输出库')
+
+
+def prepare_database(path, identity_key):
+    try:
+        os.close(os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600))
+    except FileExistsError:
+        if identity_key is not None:
+            info = path.stat()
+            if (not stat.S_ISREG(info.st_mode) or info.st_mode & 0o077 or
+                    info.st_uid != os.geteuid()):
+                raise ValueError('身份输出须为当前用户所有且仅当前用户可访问的 SQLite 文件')
 
 
 def run(args, start, end):
@@ -166,6 +254,8 @@ def run(args, start, end):
         if source is not None and (source.resolve() == db_path or
                                   (db_path.exists() and source.samefile(db_path))):
             raise ValueError('SQLite 输出与输入文件须使用不同路径')
+    identity_key = load_identity_key() if args.monitor_sqlite else None
+    prepare_database(db_path, identity_key)
     with closing(sqlite3.connect(db_path)) as db, db:
         db.execute('BEGIN IMMEDIATE')
         db.execute('''CREATE TABLE IF NOT EXISTS events (
@@ -175,18 +265,23 @@ def run(args, start, end):
         db.execute('CREATE INDEX IF NOT EXISTS events_by_date ON events (report_date, event_version)')
         db.execute('''CREATE TABLE IF NOT EXISTS collection_days (
             report_date TEXT PRIMARY KEY NOT NULL, has_logs INTEGER NOT NULL)''')
-        stats = import_events(db, args.input, start, end)
+        init_identity_tables(db, identity_key)
+        counts = Counter(inserted=0, duplicates=0, badLines=0, otherLogs=0, outsideWindow=0)
+        with event_rows(args.input, counts, start, end, args.monitor_sqlite) as rows:
+            stats = import_events(db, rows, counts, start, end, identity_key)
         stats['badRunLines'] = import_runs(db, args.runs, start, end)
         return {**build_report(db, start, end), 'import': stats}
 
 
 def main():
-    parser = argparse.ArgumentParser(description='导入监控 JSONL 事件并输出日期与版本覆盖。')
-    parser.add_argument('input', type=Path, help='realtime_events.jsonl 或 realtime_log_messages.jsonl')
+    parser = argparse.ArgumentParser(description='导入监控事件并输出日期、版本及身份摘要覆盖。')
+    parser.add_argument('input', type=Path, help='监控 JSONL 导出或配合 --monitor-sqlite 使用的监控 SQLite')
     parser.add_argument('database', type=Path, help='独立的输出 SQLite 路径')
     parser.add_argument('start_date', help='起始日期 YYYY-MM-DD，含当日')
     parser.add_argument('end_date', help='结束日期 YYYY-MM-DD，含当日')
     parser.add_argument('--runs', type=Path, help='可选的 runs.jsonl，用于识别已采集的无事件日期')
+    parser.add_argument('--monitor-sqlite', action='store_true',
+                        help='只读监控 SQLite 消息表，使用服务端 GROWTH_IDENTITY_KEY 生成身份摘要')
     args = parser.parse_args()
     try:
         start, end = parse_date(args.start_date), parse_date(args.end_date)
