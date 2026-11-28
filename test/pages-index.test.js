@@ -1,4 +1,5 @@
 const assert = require('node:assert/strict');
+const fs = require('node:fs');
 const test = require('node:test');
 const path = require('node:path');
 
@@ -385,6 +386,78 @@ test('preset calculation emits one consolidated success event', () => {
   assert.equal(events[0].payload.source, 'preset');
   assert.equal(events[0].payload.sceneKey, 'stars');
   assert.deepEqual(events[0].payload.riskWarningTypes, ['long_duration']);
+});
+
+test('D07 calculator cards expose reference parameters and calculate all six scenes', () => {
+  const app = require('../app.json');
+  assert.equal(app.pages[0], 'pages/index/index');
+  const template = fs.readFileSync(path.join(__dirname, '../pages/index/index.wxml'), 'utf8');
+  assert.match(template, /wx:for="{{presets}}" wx:key="sceneKey"/);
+  assert.match(template, /wx:if="{{index === 3}}"[^>]+bindtap="toggleMoreScenes"/);
+  assert.match(template, /wx:if="{{moreScenesExpanded \|\| 3 > index}}"/);
+  assert.match(template, /bindtap="applyPreset" data-index="{{index}}"/);
+  for (const field of ['name', 'note', 'duration', 'finalDuration', 'frameRate', 'intervalRange']) {
+    assert.ok(template.includes(`{{item.${field}}}`), `missing card field: ${field}`);
+  }
+
+  const page = loadIndexPage();
+  page.onLoad();
+  const expected = [
+    ['clouds', '云流动', '12.00', 300],
+    ['sunset', '日落', '14.40', 375],
+    ['stars', '星空', '36.00', 300],
+    ['traffic', '车流', '2.40', 250],
+    ['crowd', '人群', '3.60', 250],
+    ['plants', '植物', '144.00', 300]
+  ];
+  assert.equal(page.data.presets.length, expected.length);
+  assert.equal(page.data.moreScenesExpanded, false);
+
+  expected.forEach(([sceneKey, name, interval, totalFrames], index) => {
+    if (index === 3) {
+      page.toggleMoreScenes();
+      assert.equal(page.data.moreScenesExpanded, true);
+    }
+    const preset = page.data.presets[index];
+    assert.equal(preset.name, name);
+    assert.equal(preset.sceneKey, sceneKey);
+    assert.ok(preset.note);
+    assert.ok(preset.intervalRange);
+
+    page.applyPreset({ currentTarget: { dataset: { index } } });
+    assert.equal(page.data.selectedPresetIndex, index);
+    assert.equal(page.data.duration, preset.duration.toFixed(2));
+    assert.equal(page.data.finalDuration, preset.finalDuration.toFixed(2));
+    assert.equal(page.data.frameRate, preset.frameRate);
+    assert.equal(page.data.interval, interval);
+    assert.equal(page.data.totalFrames, totalFrames);
+  });
+
+  page.toggleMoreScenes();
+  assert.equal(page.data.moreScenesExpanded, false);
+  assert.equal(page.data.selectedPreset.sceneKey, 'plants');
+  assert.equal(page._storage.calculationHistory.length, expected.length);
+});
+
+test('D07 card selection clears when the user edits inputs, restores history or resets', () => {
+  const page = loadIndexPage();
+  const sunset = { currentTarget: { dataset: { index: 1 } } };
+
+  page.applyPreset(sunset);
+  page.inputChange({ currentTarget: { id: 'duration' }, detail: { value: '45' } });
+  assert.equal(page.data.selectedPresetIndex, null);
+  page.calculate();
+  assert.equal(page.data.interval, '7.20');
+  assert.equal(page.data.selectedPresetIndex, null);
+
+  page.applyPreset(sunset);
+  page.loadHistory({ currentTarget: { dataset: { index: 1 } } });
+  assert.equal(page.data.interval, '7.20');
+  assert.equal(page.data.selectedPresetIndex, null);
+
+  page.applyPreset(sunset);
+  page.reset();
+  assert.equal(page.data.selectedPresetIndex, null);
 });
 
 test('calculate offers a resolution and applies it when accepted', () => {

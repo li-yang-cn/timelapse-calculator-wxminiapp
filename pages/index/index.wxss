@@ -31,16 +31,6 @@ button {
 
 }
 
-.emoji {
-    margin-top: 30px;
-    width: 100px;
-    height: 100px;
-}
-
-.title {
-    font-size: 28px;
-}
-
 .reset {
     display: flex;
     justify-content: center;
@@ -54,34 +44,112 @@ button {
     width: 100%;
 }
 
-.presets {
-    margin-top: 18px;
-}
-
-.preset-scroll {
-    width: 100%;
-    white-space: nowrap;
-}
-
-.preset-list {
-    display: inline-flex;
-    padding: 0 18px;
-}
-
-.preset-emoji {
+.page-heading {
     display: flex;
     align-items: center;
-    justify-content: center;
-    width: 44px;
-    height: 44px;
-    min-width: 44px;
-    font-size: 24px;
-    line-height: 44px;
+    width: calc(100% - 32px);
+}
+
+.page-logo {
+    flex: 0 0 32px;
+    width: 32px;
+    height: 32px;
     margin-right: 10px;
 }
 
-.preset-emoji-active {
-    opacity: 0.65;
+.title {
+    color: #ffffff;
+    font-size: 23px;
+    font-weight: 600;
+}
+
+.presets {
+    width: calc(100% - 32px);
+    margin-top: 16px;
+}
+
+.presets-title {
+    margin-bottom: 8px;
+    color: #dddddd;
+    font-size: 14px;
+}
+
+.scene-card,
+.more-scenes {
+    width: 100%;
+    margin: 0 0 6px;
+    box-sizing: border-box;
+    border: 1px solid #454545;
+    border-radius: 8px;
+    background-color: #2d2d2d;
+    white-space: normal;
+}
+
+.scene-card::after,
+.more-scenes::after {
+    border: 0;
+}
+
+.scene-card {
+    display: flex;
+    align-items: flex-start;
+    padding: 7px 10px;
+    text-align: left;
+}
+
+.scene-card-active,
+.scene-card-pressed {
+    border-color: #74cab6;
+    background-color: #273a36;
+}
+
+.scene-emoji {
+    flex: 0 0 25px;
+    margin-right: 10px;
+    font-size: 19px;
+    line-height: 22px;
+}
+
+.scene-details {
+    flex: 1;
+    min-width: 0;
+}
+
+.scene-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    line-height: 21px;
+}
+
+.scene-name {
+    color: #ffffff;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.scene-selected {
+    color: #a5e5d6;
+    font-size: 12px;
+}
+
+.scene-note {
+    color: #dddddd;
+    font-size: 13px;
+    line-height: 18px;
+}
+
+.scene-reference {
+    color: #bdbdbd;
+    font-size: 12px;
+    line-height: 16px;
+}
+
+.more-scenes {
+    padding: 9px 10px;
+    color: #dddddd;
+    font-size: 14px;
+    line-height: 24px;
 }
 
 .row {

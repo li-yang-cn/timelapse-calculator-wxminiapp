@@ -40,7 +40,7 @@ Page({
                 finalDuration: 12,
                 frameRate: 25,
                 intervalRange: '30-40秒',
-                note: '建议手动对焦并准备外接供电'
+                note: '晴朗少云、远离灯光，建议手动对焦'
             },
             {
                 emoji: '🚗',
@@ -73,6 +73,7 @@ Page({
                 note: '适合长周期固定机位拍摄'
             }
         ],
+        moreScenesExpanded: false,
         selectedPresetIndex: null,
         selectedPreset: null,
         history: [],
@@ -226,6 +227,10 @@ Page({
         }));
     },
 
+    toggleMoreScenes() {
+        this.setData({ moreScenesExpanded: !this.data.moreScenesExpanded });
+    },
+
     applyPreset(e) {
         const index = Number(e.currentTarget.dataset.index);
         const preset = this.data.presets[index];
@@ -363,6 +368,8 @@ Page({
         const patch = {
             isCalculated: false,
             showResetButton: false,
+            selectedPresetIndex: null,
+            selectedPreset: null,
             lastResult: null,
             riskWarnings: [],
             calculatedFields: {
@@ -728,6 +735,8 @@ Page({
             frameRateIndex: this.getFrameRateIndex(Number(item.frameRate)),
             interval: Number(item.interval).toFixed(2),
             totalFrames: Math.round(Number(item.totalFrames)),
+            selectedPresetIndex: null,
+            selectedPreset: null,
             lastResult: item,
             riskWarnings: this.getRiskWarnings(item),
             calculatedFields: item.calculatedFields || this.getDefaultHistoryCalculatedFields(),

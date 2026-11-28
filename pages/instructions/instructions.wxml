@@ -6,7 +6,7 @@
         <view class="section-title">快速开始</view>
         <view class="step">
             <view class="step-index">1</view>
-            <view class="step-content">点击首页上方的场景图标，可直接生成常用拍摄方案。</view>
+            <view class="step-content">点击首页上方的场景卡片，可直接生成常用拍摄方案。</view>
         </view>
         <view class="step">
             <view class="step-index">2</view>
@@ -22,7 +22,7 @@
         <view class="section-title">两种计算方式</view>
         <view class="info-row">
             <view class="info-label">场景预设</view>
-            <view class="info-text">适合快速开始。选择云流动、日落、星空、车流、人群、植物等图标后，会自动生成完整参数。</view>
+            <view class="info-text">首页可直接选择云流动、日落和星空。「更多场景」中还可选择车流、人群和植物。每张卡片都提供拍摄条件和参考参数。</view>
         </view>
         <view class="info-row">
             <view class="info-label">手动计算</view>

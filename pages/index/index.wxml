@@ -1,21 +1,32 @@
 <view class="container">
-    <view class="title">延时摄影计算器</view>
-    <view class="logo">
-        <image class="emoji" src="/images/logo.png"></image>
+    <view class="page-heading">
+        <image class="page-logo" src="/images/logo.png" mode="aspectFit"></image>
+        <view class="title">延时摄影计算器</view>
     </view>
     <view class="presets">
-        <scroll-view class="preset-scroll" scroll-x="true">
-            <view class="preset-list">
-                <block wx:for="{{presets}}" wx:key="name">
-                    <view class="preset-emoji {{selectedPresetIndex === index ? 'preset-emoji-active' : ''}}" bindtap="applyPreset" data-index="{{index}}">
-                        {{item.emoji}}
+        <view class="presets-title">选择场景生成方案</view>
+        <block wx:for="{{presets}}" wx:key="sceneKey">
+            <button wx:if="{{index === 3}}" class="more-scenes" bindtap="toggleMoreScenes">
+                {{moreScenesExpanded ? '收起其他场景' : '更多场景（车流、人群、植物）'}}
+            </button>
+            <button wx:if="{{moreScenesExpanded || 3 > index}}"
+                class="scene-card {{selectedPresetIndex === index ? 'scene-card-active' : ''}}"
+                hover-class="scene-card-pressed" bindtap="applyPreset" data-index="{{index}}">
+                <text class="scene-emoji">{{item.emoji}}</text>
+                <view class="scene-details">
+                    <view class="scene-heading">
+                        <text class="scene-name">{{item.name}}</text>
+                        <text wx:if="{{selectedPresetIndex === index}}" class="scene-selected">已选</text>
                     </view>
-                </block>
-            </view>
-        </scroll-view>
+                    <view class="scene-note">{{item.note}}</view>
+                    <view class="scene-reference">参考：拍 {{item.duration}} 分 · 成片 {{item.finalDuration}} 秒 · {{item.frameRate}} fps</view>
+                    <view class="scene-reference">参考间隔 {{item.intervalRange}}</view>
+                </view>
+            </button>
+        </block>
     </view>
     <view class="tips">
-        <text>点击图标或输入2-3个已知参数，留空的项目会自动计算</text>
+        <text>也可手动输入 2–3 个已知参数，留空的项目会自动计算</text>
     </view>
     <view class="functions">
         <view class="row {{calculatedFields.duration ? 'calculated-row' : ''}}">
